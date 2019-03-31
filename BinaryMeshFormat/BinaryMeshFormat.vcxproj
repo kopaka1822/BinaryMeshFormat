@@ -115,6 +115,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="demo.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\bmf\BinaryMesh.h" />
+    <ClInclude Include="..\include\bmf\Loader.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
