@@ -55,9 +55,12 @@ namespace bmf
 		BinaryMesh& operator=(BinaryMesh&&) noexcept = default;
 #pragma endregion
 	private:
+#pragma region Generating
 		// generator helpers
 		BinaryMesh useVertexGenerator(const SingleVertexGenerator& svgen) const;
 		BinaryMesh useVertexGenerator(const MultiVertexGenerator& mvgen) const;
+#pragma endregion 
+#pragma region FileIO
 		// fstream helpers
 		template<class T>
 		static void write(std::fstream& stream, const T& value);
@@ -67,6 +70,7 @@ namespace bmf
 		static T read(std::fstream& stream);
 		template<class T>
 		static std::vector<T> read(std::fstream& stream, size_t count);
+#pragma endregion 
 
 		std::vector<float> m_vertices;
 		std::vector<uint32_t> m_indices;
