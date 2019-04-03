@@ -20,12 +20,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\bmf\Loader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\bmf\BinaryMesh.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\bmf\VertexGenerator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -39,6 +33,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\bmf\VertexCache.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\bmf\BinaryMesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

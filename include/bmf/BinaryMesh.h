@@ -55,8 +55,18 @@ namespace bmf
 		BinaryMesh& operator=(BinaryMesh&&) noexcept = default;
 #pragma endregion
 	private:
+		// generator helpers
 		BinaryMesh useVertexGenerator(const SingleVertexGenerator& svgen) const;
 		BinaryMesh useVertexGenerator(const MultiVertexGenerator& mvgen) const;
+		// fstream helpers
+		template<class T>
+		static void write(std::fstream& stream, const T& value);
+		template<class T>
+		static void write(std::fstream& stream, const std::vector<T>& vector);
+		template<class T>
+		static T read(std::fstream& stream);
+		template<class T>
+		static std::vector<T> read(std::fstream& stream, size_t count);
 
 		std::vector<float> m_vertices;
 		std::vector<uint32_t> m_indices;
@@ -110,34 +120,30 @@ namespace bmf
 		if (memcmp(sig, "BMF", 3) != 0)
 			throw std::runtime_error("invalid file signature");
 
-		uint32_t ui32;
-		f >> ui32; // version number
+		uint32_t ui32 = read<uint32_t>(f);
 		if (ui32 != s_version)
 			throw std::runtime_error("invalid file version");
 
-		f >> ui32; // attributes
+		ui32 = read<uint32_t>(f); // attributes
 
 		// create mesh with attributes
 		BinaryMesh m;
 		m.m_attributes = ui32;
 
 		// read vertices
-		f >> ui32; // num vertices
-		m.m_vertices.resize(ui32);
+		ui32 = read<uint32_t>(f); // num vertices
 		// read vertex data
-		f.read(reinterpret_cast<char*>(m.m_vertices.data()), ui32 * sizeof(m.m_vertices[0]));
+		m.m_vertices = read<float>(f, ui32);
 
 		// read indices
-		f >> ui32; // num indices
-		m.m_indices.resize(ui32);
+		ui32 = read<uint32_t>(f); // num indices
 		// read index data
-		f.read(reinterpret_cast<char*>(m.m_indices.data()), ui32 * sizeof(m.m_indices[0]));
+		m.m_indices = read<uint32_t>(f, ui32);
 
 		// read shapes
-		f >> ui32; // num shapes
-		m.m_shapes.resize(ui32);
+		ui32 = read<uint32_t>(f); // num shapes
 		// read shape data
-		f.read(reinterpret_cast<char*>(m.m_shapes.data()), ui32 * sizeof(m.m_shapes[0]));
+		m.m_shapes = read<Shape>(f, ui32);
 
 		// check file end signature
 		f >> sig[0] >> sig[1] >> sig[2];
@@ -157,27 +163,56 @@ namespace bmf
 		f << 'B' << 'M' << 'F';
 
 		// write version number
-		f << s_version;
+		write(f, s_version);
 
 		// write attributes
-		f << m_attributes;
+		write(f, m_attributes);
 
 		// write vertices
-		f << uint32_t(m_vertices.size());
-		f.write(reinterpret_cast<const char*>(m_vertices.data()), m_vertices.size() * sizeof(m_vertices[0]));
+		write(f, uint32_t(m_vertices.size()));
+		write(f, m_vertices);
 
 		// write indices
-		f << uint32_t(m_indices.size());
-		f.write(reinterpret_cast<const char*>(m_indices.data()), m_indices.size() * sizeof(m_indices[0]));
+		write(f, uint32_t(m_indices.size()));
+		write(f, m_indices);
 
 		// write shapes
-		f << uint32_t(m_shapes.size());
-		f.write(reinterpret_cast<const char*>(m_shapes.data()), m_shapes.size() * sizeof(m_shapes[0]));
+		write(f, uint32_t(m_shapes.size()));
+		write(f, m_shapes);
 
 		// write end of file signature
 		f << 'E' << 'O' << 'F';
 
 		f.close();
+	}
+
+	template <class T>
+	void BinaryMesh::write(std::fstream& stream, const T& value)
+	{
+		stream.write(reinterpret_cast<const char*>(&value), sizeof(T));
+	}
+
+	template <class T>
+	void BinaryMesh::write(std::fstream& stream, const std::vector<T>& vector)
+	{
+		stream.write(reinterpret_cast<const char*>(vector.data()), vector.size() * sizeof(T));
+	}
+
+	template <class T>
+	T BinaryMesh::read(std::fstream& stream)
+	{
+		T res;
+		stream.read(reinterpret_cast<char*>(&res), sizeof(T));
+		return res;
+	}
+
+	template <class T>
+	std::vector<T> BinaryMesh::read(std::fstream& stream, size_t count)
+	{
+		std::vector<T> res;
+		res.resize(count);
+		stream.read(reinterpret_cast<char*>(res.data()), count * sizeof(T));
+		return res;
 	}
 #pragma endregion
 #pragma region Grouping
