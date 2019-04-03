@@ -118,8 +118,13 @@
     <ClCompile Include="demo.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\include\bmf\Attributes.h" />
     <ClInclude Include="..\include\bmf\BinaryMesh.h" />
     <ClInclude Include="..\include\bmf\Loader.h" />
+    <ClInclude Include="..\include\bmf\Triangle.h" />
+    <ClInclude Include="..\include\bmf\Vertex.h" />
+    <ClInclude Include="..\include\bmf\VertexCache.h" />
+    <ClInclude Include="..\include\bmf\VertexGenerator.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
