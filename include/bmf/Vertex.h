@@ -10,14 +10,14 @@ namespace bmf
 	{
 	public:
 		virtual ~Vertex() = default;
-		//VertexBase(uint32_t attributes, const float* data);
-		constexpr Vertex(uint32_t attributes) noexcept;
 		Vertex() noexcept = default;
 		float* get(Attributes attr);
 		const float* get(Attributes attr) const;
 		void copyAttributesTo(Vertex& outVertex) const;
 		virtual float* data() = 0;
 		const float* data() const;
+	protected:
+		constexpr Vertex(uint32_t attributes) noexcept;
 	private:
 		uint32_t m_attributes;
 	};
@@ -27,6 +27,7 @@ namespace bmf
 	public:
 		ValueVertex(uint32_t attributes);
 		ValueVertex(uint32_t attributes, const float* data);
+		ValueVertex() noexcept = default;
 		~ValueVertex();
 		float* data() override;
 	private:
@@ -36,14 +37,14 @@ namespace bmf
 	class RefVertex final : public Vertex
 	{
 	public:
-		constexpr RefVertex(uint32_t attributes, float* data);
+		constexpr RefVertex(uint32_t attributes, float* data) noexcept;
 		RefVertex() noexcept = default;
 		float* data() override;
 	private:
 		float* m_data;
 	};
 
-	inline Vertex::Vertex(uint32_t attributes)
+	constexpr Vertex::Vertex(uint32_t attributes) noexcept
 		:
 	m_attributes(attributes)
 	{}
@@ -98,7 +99,8 @@ namespace bmf
 	Vertex(attributes),
 	m_member(VertexCache::get())
 	{
-		m_member.assign(data, data + getAttributeElementStride(attributes));
+		m_member.resize(getAttributeElementStride(attributes));
+		std::copy(data, data + getAttributeElementStride(attributes), m_member.data());
 	}
 
 	inline ValueVertex::~ValueVertex()
@@ -111,7 +113,7 @@ namespace bmf
 		return m_member.data();
 	}
 
-	inline RefVertex::RefVertex(uint32_t attributes, float* data)
+	constexpr RefVertex::RefVertex(uint32_t attributes, float* data) noexcept
 		:
 	Vertex(attributes),
 	m_data(data)

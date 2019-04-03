@@ -49,7 +49,7 @@ namespace bmf
 		for (uint32_t cur = 1; cur < uint32_t(a); cur = cur << 1)
 		{
 			if (all & cur)
-				offset += getAttributeElementCount(Attributes(a));
+				offset += getAttributeElementCount(Attributes(cur));
 		}
 		return offset;
 	}
