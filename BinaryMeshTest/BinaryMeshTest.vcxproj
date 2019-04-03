@@ -38,6 +38,7 @@
   <ItemGroup>
     <ClCompile Include="AttributesTest.cpp" />
     <ClCompile Include="BinaryMeshFileIOTest.cpp" />
+    <ClCompile Include="BinaryMeshGeneratingTest.cpp" />
     <ClCompile Include="BinaryMeshGroupingTest.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

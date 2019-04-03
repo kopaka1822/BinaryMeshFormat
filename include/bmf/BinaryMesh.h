@@ -337,14 +337,14 @@ namespace bmf
 		{
 			// remove unnecessary attributes
 			const auto oldVertexStride = getAttributeElementStride(m_attributes);
-			const auto vertexCount = m_vertices.size();
+			const auto vertexCount = m_vertices.size() / oldVertexStride;
 			const auto newVertexStride = getAttributeElementStride(newAttributes);
 			std::vector<float> newVertices(newVertexStride * vertexCount);
 			
 			for(size_t i = 0; i < vertexCount; ++i)
 			{
 				const RefVertex src(m_attributes, const_cast<float*>(&m_vertices[i * oldVertexStride]));
-				RefVertex dst(m_attributes, &newVertices[i * newVertexStride]);
+				RefVertex dst(newAttributes, &newVertices[i * newVertexStride]);
 				// change attributes to match destination
 				src.copyAttributesTo(dst);
 			}
