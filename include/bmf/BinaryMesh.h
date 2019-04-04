@@ -370,15 +370,19 @@ namespace bmf
 			throw std::runtime_error("BinaryMesh::changeAttributes no matching generator found to convert to new attributes");
 
 		// use the generator to generate a new mesh
+		BinaryMesh res;
 		const auto svgen = dynamic_cast<SingleVertexGenerator*>((*gen).get());
-		if(svgen != nullptr)
-			return useVertexGenerator(*svgen);
-
 		const auto mvgen = dynamic_cast<MultiVertexGenerator*>((*gen).get());
-		if (mvgen != nullptr)
-			return useVertexGenerator(*mvgen);
 
-		throw std::runtime_error("BinaryMesh::changeAttributes incompatible vertex generator type");
+		if(svgen != nullptr)
+			res = useVertexGenerator(*svgen);
+		else if (mvgen != nullptr)
+			res = useVertexGenerator(*mvgen);
+		else throw std::runtime_error("BinaryMesh::changeAttributes incompatible vertex generator type");
+
+		// finished?
+		if (res.m_attributes == newAttributes) return res;
+		return res.changeAttributes(newAttributes, generators);
 	}
 #pragma endregion
 #pragma region Ctor
@@ -396,7 +400,7 @@ namespace bmf
 	{
 		const auto newAttributes = svgen.getOutputAttribute(m_attributes);
 		const auto oldVertexStride = getAttributeElementStride(m_attributes);
-		const auto vertexCount = m_vertices.size();
+		const auto vertexCount = m_vertices.size() / oldVertexStride;
 		const auto newVertexStride = getAttributeElementStride(newAttributes);
 		std::vector<float> newVertices(newVertexStride * vertexCount);
 
@@ -404,7 +408,7 @@ namespace bmf
 		for(size_t i = 0; i < vertexCount; ++i)
 		{
 			const RefVertex src(m_attributes, const_cast<float*>(&m_vertices[i * oldVertexStride]));
-			RefVertex dst(m_attributes, &newVertices[i * newVertexStride]);
+			RefVertex dst(newAttributes, &newVertices[i * newVertexStride]);
 
 			src.copyAttributesTo(dst);
 			// apply generator
@@ -418,7 +422,7 @@ namespace bmf
 	{
 		const auto newAttributes = mvgen.getOutputAttribute(m_attributes);
 		const auto oldVertexStride = getAttributeElementStride(m_attributes);
-		const auto vertexCount = m_vertices.size();
+		const auto vertexCount = m_vertices.size() / oldVertexStride;
 		const auto newVertexStride = getAttributeElementStride(newAttributes);
 
 		std::vector<float> newVertices;
@@ -465,8 +469,10 @@ namespace bmf
 				tri.vertex[2] = RefVertex(m_attributes, const_cast<float*>(&m_vertices[*itri.index[2] * oldVertexStride]));
 			}
 
+			if (triangles.empty()) continue; // this vertex is not used in any triangle => discard
+
 			// use generator to generate new vertices
-			outIndices.resize(triangles.size());
+			outIndices.reserve(triangles.size());
 			mvgen.generate(triangles, valueVertices, outIndices);
 
 			assert(valueVertices.size());

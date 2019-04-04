@@ -13,9 +13,11 @@ namespace bmf
 		Vertex() noexcept = default;
 		float* get(Attributes attr);
 		const float* get(Attributes attr) const;
+		void set(Attributes attr, const float* values);
 		void copyAttributesTo(Vertex& outVertex) const;
 		virtual float* data() = 0;
 		const float* data() const;
+		uint32_t getAttributes() const;
 	protected:
 		constexpr Vertex(uint32_t attributes) noexcept;
 	private:
@@ -62,6 +64,13 @@ namespace bmf
 		return const_cast<Vertex*>(this)->get(attr);
 	}
 
+	inline void Vertex::set(Attributes attr, const float* values)
+	{
+		// is the attribute available?
+		assert(attr & m_attributes);
+		std::copy(values, values + getAttributeElementCount(attr), get(attr));
+	}
+
 	inline void Vertex::copyAttributesTo(Vertex& outVertex) const
 	{
 		auto newAttributes = outVertex.m_attributes;
@@ -84,6 +93,11 @@ namespace bmf
 	inline const float* Vertex::data() const
 	{
 		return const_cast<Vertex*>(this)->data();
+	}
+
+	inline uint32_t Vertex::getAttributes() const
+	{
+		return m_attributes;
 	}
 
 	inline ValueVertex::ValueVertex(uint32_t attributes)

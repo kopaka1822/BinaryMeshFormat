@@ -22,6 +22,15 @@ namespace bmf
 	class MultiVertexGenerator : public VertexGenerator
 	{
 	public:
+
+		/// \brief will be called for each vertex
+		/// \param triangles all triangles where the current vertex is used in. 
+		/// The current vertex is always the first vertex in the triangle.
+		/// \param outVertices the converted vertices that should be used for the new mesh. 
+		/// The vector is empty (but enough space was reserved).
+		/// \param outIndices indicates which vertices from the outVertices belong to which mesh. 
+		/// The vector is empty (but enough space was reserved).
+		/// outIndices[a] = b means: The triangle at position a uses the vertex at position b in outVertices.
 		virtual void generate(
 			const std::vector<Triangle>& triangles, 
 			std::vector<ValueVertex>& outVertices, 
