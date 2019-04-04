@@ -5,6 +5,7 @@
 #include <algorithm>
 #include "Attributes.h"
 #include "VertexGenerator.h"
+#include <unordered_map>
 
 #ifdef BMF_GENERATORS
 #include "generators/ConstantValueGenerator.h"
@@ -49,6 +50,7 @@ namespace bmf
 #pragma region Generating
 		void changeAttributes(uint32_t newAttributes,
 		                            const std::vector<std::unique_ptr<VertexGenerator>>& generators);
+		void removeDuplicateVertices();
 #pragma endregion
 #pragma region Ctor
 		BinaryMesh(uint32_t attributes, std::vector<float> vertices, std::vector<uint32_t> indices,
@@ -395,6 +397,78 @@ namespace bmf
 
 			throw std::runtime_error("BinaryMesh::changeAttributes incompatible vertex generator type");
 		}
+	}
+
+	inline void BinaryMesh::removeDuplicateVertices()
+	{
+		std::unordered_map<RefVertex, std::vector<uint32_t>> map;
+
+		const auto stride = getAttributeElementStride(m_attributes);
+		const auto numVertices = m_vertices.size() / stride;
+
+		for(size_t i = 0; i < numVertices; ++i)
+		{
+			const RefVertex v(m_attributes, &m_vertices[i * stride]);
+			auto it = map.find(v);
+			if(it != map.end())
+			{
+				// add this vertex index
+				it->second.push_back(i);
+			}
+			else
+			{
+				map[v] = std::vector<uint32_t>(std::initializer_list<uint32_t>{ i });
+			}
+		}
+
+		if (map.size() == numVertices) return; // no duplicates
+
+		// remove duplicates
+		std::vector<bool> usedVertices;
+		// boolmap that indicates which vertices were already used
+		usedVertices.assign(numVertices, false);
+
+		// newIndexLookupTable[a] = b indicates that the vertex that was on (index) position a is now on (index) position b
+		std::vector<uint32_t> newIndexLookupTable;
+		newIndexLookupTable.resize(numVertices);
+
+		std::vector<float> newVertices;
+		newVertices.resize(map.size() * stride);
+		auto curVertex = newVertices.begin();
+		uint32_t curIndex = 0;
+
+		// fill newVertices and create index lookup table
+		for(size_t i = 0; i < numVertices; ++i)
+		{
+			// already inserted into new vertices?
+			if(usedVertices[i]) continue;
+
+			// insert into new vertices
+			curVertex = std::copy(
+				m_vertices.begin() + i * stride, 
+				m_vertices.begin() + (i + 1) * stride, 
+				curVertex);
+			
+			const RefVertex v(m_attributes, &m_vertices[i * stride]);
+			auto it = map.find(v);
+			// set bitflags and index lookup
+			for(auto idx : it->second)
+			{
+				usedVertices[idx] = true;
+				newIndexLookupTable[idx] = curIndex;
+			}
+
+			++curIndex;
+		}
+		m_vertices = std::move(newVertices);
+
+		// fix indices
+		for(auto& i : m_indices)
+		{
+			i = newIndexLookupTable[i];
+		}
+
+		// shapes remain because the index offset did not change
 	}
 #pragma endregion
 #pragma region Ctor

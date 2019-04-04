@@ -18,6 +18,9 @@ namespace bmf
 		virtual float* data() = 0;
 		const float* data() const;
 		uint32_t getAttributes() const;
+		bool equals(const Vertex& other) const;
+		bool operator==(const Vertex& other) const;
+		bool operator!=(const Vertex& other) const;
 	protected:
 		constexpr Vertex(uint32_t attributes) noexcept;
 	private:
@@ -100,6 +103,24 @@ namespace bmf
 		return m_attributes;
 	}
 
+	inline bool Vertex::equals(const Vertex& other) const
+	{
+		// attributes must match
+		if (m_attributes != other.m_attributes) return false;
+		// do byte comparision
+		return memcmp(data(), other.data(), getAttributeByteStride(m_attributes)) == 0;
+	}
+
+	inline bool Vertex::operator==(const Vertex& other) const
+	{
+		return equals(other);
+	}
+
+	inline bool Vertex::operator!=(const Vertex& other) const
+	{
+		return !equals(other);
+	}
+
 	inline ValueVertex::ValueVertex(uint32_t attributes)
 		:
 	Vertex(attributes),
@@ -137,4 +158,43 @@ namespace bmf
 	{
 		return m_data;
 	}
+}
+
+// std extension
+namespace std
+{
+	template<>
+	struct hash<bmf::RefVertex>
+	{
+		size_t operator()(const bmf::RefVertex& vertex) const noexcept
+		{
+			if(m_cachedAttribute != vertex.getAttributes())
+			{
+				m_cachedAttribute = vertex.getAttributes();
+				m_cachedCount = bmf::getAttributeElementStride(vertex.getAttributes());
+			}
+
+			size_t res = 0;
+			const float* data = vertex.Vertex::data();
+			// hash all members
+			for (auto i = data, end = data + m_cachedCount; i != end; ++i)
+				res ^= fhash(*i);
+
+			return res;
+		}
+
+	private:
+		mutable uint32_t m_cachedAttribute = 0;
+		mutable uint32_t m_cachedCount = 0;
+		const std::hash<float> fhash;
+	};
+
+	template<>
+	struct equal_to<bmf::RefVertex>
+	{
+		bool operator()(const bmf::RefVertex& left, const bmf::RefVertex& right) const
+		{
+			return left.equals(right);
+		}
+	};
 }
