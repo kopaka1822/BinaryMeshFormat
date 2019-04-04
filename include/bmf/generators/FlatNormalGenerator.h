@@ -3,7 +3,7 @@
 
 namespace bmf
 {
-	class FlatNormalGenerator final : MultiVertexGenerator
+	class FlatNormalGenerator final : public MultiVertexGenerator
 	{
 		static constexpr float NormalEqualEpsilon = 0.0001f;
 	public:

@@ -50,7 +50,7 @@ void bmf::FlatNormalGenerator::generate(const std::vector<Triangle>& triangles,
 		tri.vertex[0].copyAttributesTo(newVertex);
 		newVertex.set(Normal, glm::value_ptr(n));
 
-		outIndices.push_back(outVertices.size() - 1);
+		outIndices.push_back(outVertices.size());
 		outVertices.emplace_back(std::move(newVertex));
 	}
 }

@@ -448,25 +448,33 @@ namespace bmf
 			// find all triangles that reference this vertex
 			for(size_t idxIdx = 0, idxSize = m_indices.size(); idxIdx < idxSize; idxIdx += 3)
 			{
-				if(m_indices[idxIdx] != vertIdx && m_indices[idxIdx + 1] != vertIdx && m_indices[idxIdx + 1] != vertIdx)
+				if(m_indices[idxIdx] != vertIdx && m_indices[idxIdx + 1] != vertIdx && m_indices[idxIdx + 2] != vertIdx)
 					continue;
 
 				// this triangle matches
 				triangleIndices.emplace_back();
-				auto& itri = triangleIndices.back();
-				itri.index[0] = &newIndices[idxIdx];
-				itri.index[1] = &newIndices[idxIdx + 1];
-				itri.index[2] = &newIndices[idxIdx + 2];
+				
+				// get rotatation amount (vertex index must be first index)
+				size_t rot = 0;
+				if (m_indices[idxIdx + 1] == vertIdx) rot = 1;
+				if (m_indices[idxIdx + 2] == vertIdx) rot = 2;
 
-				// rotate triangle if vertex index is not first index
-				while (*itri.index[0] != vertIdx) itri.rotateLeft();
+				// get offsets from rotation
+				size_t off0 = rot;
+				size_t off1 = (rot + 1) % 3;
+				size_t off2 = (rot + 2) % 3;
+
+				auto& itri = triangleIndices.back();
+				itri.index[0] = &newIndices[idxIdx + off0];
+				itri.index[1] = &newIndices[idxIdx + off1];
+				itri.index[2] = &newIndices[idxIdx + off2];
 
 				// add triangle representation
 				triangles.emplace_back();
 				auto& tri = triangles.back();
-				tri.vertex[0] = RefVertex(m_attributes, const_cast<float*>(&m_vertices[*itri.index[0] * oldVertexStride]));
-				tri.vertex[1] = RefVertex(m_attributes, const_cast<float*>(&m_vertices[*itri.index[1] * oldVertexStride]));
-				tri.vertex[2] = RefVertex(m_attributes, const_cast<float*>(&m_vertices[*itri.index[2] * oldVertexStride]));
+				tri.vertex[0] = RefVertex(m_attributes, const_cast<float*>(&m_vertices[m_indices[idxIdx + off0] * oldVertexStride]));
+				tri.vertex[1] = RefVertex(m_attributes, const_cast<float*>(&m_vertices[m_indices[idxIdx + off1] * oldVertexStride]));
+				tri.vertex[2] = RefVertex(m_attributes, const_cast<float*>(&m_vertices[m_indices[idxIdx + off2] * oldVertexStride]));
 			}
 
 			if (triangles.empty()) continue; // this vertex is not used in any triangle => discard
@@ -479,7 +487,7 @@ namespace bmf
 
 			// add vertices
 			const auto startIdx = newVertices.size();
-			const auto startElementIdx = startIdx / oldVertexStride;
+			const auto startElementIdx = startIdx / newVertexStride;
 
 			newVertices.resize(newVertices.size() + valueVertices.size() * newVertexStride);
 			// copy vertices
