@@ -25,7 +25,9 @@ TEST(TestSuite, ConstantValue)
 	const float texValue[] = { 2.0f, 3.0f };
 	generators.emplace_back(new ConstantValueGenerator(ValueVertex(Texcoord1, texValue)));
 
-	auto res = m1.changeAttributes(Position | Texcoord1, generators);
+	BinaryMesh res(m1);
+	res.changeAttributes(Position | Texcoord1, generators);
+
 	// indices should not change
 	EXPECT_EQ(res.getIndices(), m1.getIndices());
 	// check vertices

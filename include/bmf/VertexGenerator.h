@@ -31,6 +31,8 @@ namespace bmf
 		/// \param outIndices indicates which vertices from the outVertices belong to which mesh. 
 		/// The vector is empty (but enough space was reserved).
 		/// outIndices[a] = b means: The triangle at position a uses the vertex at position b in outVertices.
+		/// SPECIAL CASE: if outVertcies contains only one vertex, outIndices may be empty. Otherwise it must
+		/// contain one index for each triangle
 		virtual void generate(
 			const std::vector<Triangle>& triangles, 
 			std::vector<ValueVertex>& outVertices, 

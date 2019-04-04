@@ -12,4 +12,11 @@ namespace bmf
 	{
 		return glm::vec3(values[0], values[1], values[2]);
 	}
+
+	inline void toFloat3(const glm::vec3& vec, float* values)
+	{
+		values[0] = vec[0];
+		values[1] = vec[1];
+		values[2] = vec[2];
+	}
 }

@@ -41,9 +41,15 @@
     <ClInclude Include="..\include\bmf\generators\glm.h">
       <Filter>Header Files\generators</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\bmf\generators\InterpolatedNormalGenerator.h">
+      <Filter>Header Files\generators</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\FlatNormalGenerator.cpp">
+      <Filter>Header Files\generators</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\InterpolatedNormalGenerator.cpp">
       <Filter>Header Files\generators</Filter>
     </ClCompile>
   </ItemGroup>

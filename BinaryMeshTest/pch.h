@@ -6,6 +6,8 @@
 #pragma once
 
 #include "gtest/gtest.h"
+
+#define BMF_GENERATORS
 #include "../include/bmf/BinaryMesh.h"
 
 using namespace bmf;

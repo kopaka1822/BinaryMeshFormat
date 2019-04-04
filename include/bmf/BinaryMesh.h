@@ -6,6 +6,12 @@
 #include "Attributes.h"
 #include "VertexGenerator.h"
 
+#ifdef BMF_GENERATORS
+#include "generators/ConstantValueGenerator.h"
+#include "generators/FlatNormalGenerator.h"
+#include "generators/InterpolatedNormalGenerator.h"
+#endif
+
 namespace bmf
 {
 	class BinaryMesh
@@ -41,8 +47,8 @@ namespace bmf
 		static BinaryMesh mergeShapes(const std::vector<BinaryMesh>& meshes);
 #pragma endregion
 #pragma region Generating
-		BinaryMesh changeAttributes(uint32_t newAttributes,
-		                            const std::vector<std::unique_ptr<VertexGenerator>>& generators) const;
+		void changeAttributes(uint32_t newAttributes,
+		                            const std::vector<std::unique_ptr<VertexGenerator>>& generators);
 #pragma endregion
 #pragma region Ctor
 		BinaryMesh(uint32_t attributes, std::vector<float> vertices, std::vector<uint32_t> indices,
@@ -57,8 +63,8 @@ namespace bmf
 	private:
 #pragma region Generating
 		// generator helpers
-		BinaryMesh useVertexGenerator(const SingleVertexGenerator& svgen) const;
-		BinaryMesh useVertexGenerator(const MultiVertexGenerator& mvgen) const;
+		void useVertexGenerator(const SingleVertexGenerator& svgen);
+		void useVertexGenerator(const MultiVertexGenerator& mvgen);
 #pragma endregion 
 #pragma region FileIO
 		// fstream helpers
@@ -326,63 +332,69 @@ namespace bmf
 	}
 #pragma endregion
 #pragma region Generation
-	inline BinaryMesh BinaryMesh::changeAttributes(uint32_t newAttributes,
-	                                               const std::vector<std::unique_ptr<VertexGenerator>>& generators) const
+	inline void BinaryMesh::changeAttributes(uint32_t newAttributes,
+		const std::vector<std::unique_ptr<VertexGenerator>>& generators) 
 	{
-		// simple copy
-		if (newAttributes == m_attributes) return *this;
-		
-		// everything generated?
-		if((newAttributes & m_attributes) == newAttributes)
+		while (newAttributes != m_attributes)
 		{
-			// remove unnecessary attributes
-			const auto oldVertexStride = getAttributeElementStride(m_attributes);
-			const auto vertexCount = m_vertices.size() / oldVertexStride;
-			const auto newVertexStride = getAttributeElementStride(newAttributes);
-			std::vector<float> newVertices(newVertexStride * vertexCount);
-			
-			for(size_t i = 0; i < vertexCount; ++i)
+			// everything generated?
+			if ((newAttributes & m_attributes) == newAttributes)
 			{
-				const RefVertex src(m_attributes, const_cast<float*>(&m_vertices[i * oldVertexStride]));
-				RefVertex dst(newAttributes, &newVertices[i * newVertexStride]);
-				// change attributes to match destination
-				src.copyAttributesTo(dst);
+				// remove unnecessary attributes
+				const auto oldVertexStride = getAttributeElementStride(m_attributes);
+				const auto vertexCount = m_vertices.size() / oldVertexStride;
+				const auto newVertexStride = getAttributeElementStride(newAttributes);
+				std::vector<float> newVertices(newVertexStride * vertexCount);
+
+				for (size_t i = 0; i < vertexCount; ++i)
+				{
+					const RefVertex src(m_attributes, const_cast<float*>(&m_vertices[i * oldVertexStride]));
+					RefVertex dst(newAttributes, &newVertices[i * newVertexStride]);
+					// change attributes to match destination
+					src.copyAttributesTo(dst);
+				}
+
+				m_attributes = newAttributes;
+				m_vertices = std::move(newVertices);
+				// indices and shapes remain
+				continue;
 			}
 
-			return BinaryMesh(newAttributes, newVertices, m_indices, m_shapes);
-		}
+			// find first promising generator
+			auto gen = generators.begin();
+			for (const auto end = generators.end(); gen != end; ++gen)
+			{
+				// can this generator be used?
+				if (((*gen)->getRequiredAttributes() & m_attributes) != (*gen)->getRequiredAttributes())
+					continue;
 
-		// find first promising generator
-		auto gen = generators.begin();
-		for (const auto end = generators.end(); gen != end; ++gen)
-		{
-			// can this generator be used?
-			if(((*gen)->getRequiredAttributes() & m_attributes) != (*gen)->getRequiredAttributes())
+				// will this generator produce something useful?
+				auto outAttribs = (*gen)->getOutputAttribute(m_attributes);
+				if ((newAttributes & outAttribs) > (newAttributes & m_attributes))
+					break;
+			}
+
+			if (gen == generators.end())
+				throw std::runtime_error("BinaryMesh::changeAttributes no matching generator found to convert to new attributes");
+
+			// use the generator to generate a new mesh
+			BinaryMesh res;
+			const auto svgen = dynamic_cast<SingleVertexGenerator*>((*gen).get());
+			if (svgen != nullptr)
+			{
+				useVertexGenerator(*svgen);
 				continue;
+			}
 
-			// will this generator produce something useful?
-			auto outAttribs = (*gen)->getOutputAttribute(m_attributes);
-			if ((newAttributes & outAttribs) > (newAttributes & m_attributes))
-				break;
+			const auto mvgen = dynamic_cast<MultiVertexGenerator*>((*gen).get());
+			if (mvgen != nullptr)
+			{
+				useVertexGenerator(*mvgen);
+				continue;
+			}
+
+			throw std::runtime_error("BinaryMesh::changeAttributes incompatible vertex generator type");
 		}
-
-		if (gen == generators.end())
-			throw std::runtime_error("BinaryMesh::changeAttributes no matching generator found to convert to new attributes");
-
-		// use the generator to generate a new mesh
-		BinaryMesh res;
-		const auto svgen = dynamic_cast<SingleVertexGenerator*>((*gen).get());
-		const auto mvgen = dynamic_cast<MultiVertexGenerator*>((*gen).get());
-
-		if(svgen != nullptr)
-			res = useVertexGenerator(*svgen);
-		else if (mvgen != nullptr)
-			res = useVertexGenerator(*mvgen);
-		else throw std::runtime_error("BinaryMesh::changeAttributes incompatible vertex generator type");
-
-		// finished?
-		if (res.m_attributes == newAttributes) return res;
-		return res.changeAttributes(newAttributes, generators);
 	}
 #pragma endregion
 #pragma region Ctor
@@ -396,7 +408,7 @@ namespace bmf
 	{
 	}
 
-	inline BinaryMesh BinaryMesh::useVertexGenerator(const SingleVertexGenerator& svgen) const
+	inline void BinaryMesh::useVertexGenerator(const SingleVertexGenerator& svgen)
 	{
 		const auto newAttributes = svgen.getOutputAttribute(m_attributes);
 		const auto oldVertexStride = getAttributeElementStride(m_attributes);
@@ -415,10 +427,12 @@ namespace bmf
 			svgen.generate(dst);
 		}
 
-		return BinaryMesh(newAttributes, newVertices, m_indices, m_shapes);
+		m_attributes = newAttributes;
+		m_vertices = std::move(newVertices);
+		// indices and shapes remain
 	}
 
-	inline BinaryMesh BinaryMesh::useVertexGenerator(const MultiVertexGenerator& mvgen) const
+	inline void BinaryMesh::useVertexGenerator(const MultiVertexGenerator& mvgen)
 	{
 		const auto newAttributes = mvgen.getOutputAttribute(m_attributes);
 		const auto oldVertexStride = getAttributeElementStride(m_attributes);
@@ -500,15 +514,30 @@ namespace bmf
 			}
 
 			// adjust indices
-			assert(outIndices.size() == triangles.size());
-			assert(triangles.size() == triangleIndices.size());
-			for(size_t i = 0; i < triangleIndices.size(); ++i)
+			if(valueVertices.size() == 1)
 			{
-				*triangleIndices[i].index[0] = startElementIdx + outIndices[i];
+				// all indices must be the same (there is only one vertex)
+				for (size_t i = 0; i < triangleIndices.size(); ++i)
+				{
+					*triangleIndices[i].index[0] = startElementIdx;
+				}
 			}
+			else
+			{
+				// multiple vertices => different output indices
+				assert(outIndices.size() == triangles.size());
+				assert(triangles.size() == triangleIndices.size());
+				for (size_t i = 0; i < triangleIndices.size(); ++i)
+				{
+					*triangleIndices[i].index[0] = startElementIdx + outIndices[i];
+				}
+			}	
 		}
 
-		return BinaryMesh(newAttributes, newVertices, newIndices, m_shapes);
+		m_attributes = newAttributes;
+		m_vertices = std::move(newVertices);
+		m_indices = std::move(newIndices);
+		// shapes remain (index offsets have not changed. only the values of the indices changed)
 	}
 #pragma endregion
 }

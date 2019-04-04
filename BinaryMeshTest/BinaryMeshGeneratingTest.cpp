@@ -21,7 +21,9 @@ TEST(TestSuite, GenerateRemove)
 	BinaryMesh m1(Texcoord0 | Position, vertices, indices, shapes);
 
 	// removing texcoords
-	auto res = m1.changeAttributes(Texcoord0, {});
+	BinaryMesh res(m1);
+	res.changeAttributes(Texcoord0, {});
+
 	EXPECT_EQ(res.getAttributes(), Texcoord0);
 	EXPECT_EQ(res.getIndices(), indices);
 	EXPECT_EQ(res.getShapes().size(), shapes.size());

@@ -18,15 +18,8 @@ void bmf::FlatNormalGenerator::generate(const std::vector<Triangle>& triangles,
 	// generate flat normal for each triangle
 	for (auto& tri : triangles)
 	{
-		auto p0 = toVec3(tri.vertex[0].get(Position));
-		auto p1 = toVec3(tri.vertex[1].get(Position));
-		auto p2 = toVec3(tri.vertex[2].get(Position));
-
-		auto v1 = p1 - p0; // p0p1 vec
-		auto v2 = p2 - p0; // p0p2 vec
-
-		auto n = glm::cross(v1, v2);
-		n = glm::normalize(n);
+		glm::vec3 n;
+		getFlatNormal(tri, glm::value_ptr(n));
 
 		// does the vertex already exist?
 		bool foundVertex = false;
@@ -53,4 +46,18 @@ void bmf::FlatNormalGenerator::generate(const std::vector<Triangle>& triangles,
 		outIndices.push_back(outVertices.size());
 		outVertices.emplace_back(std::move(newVertex));
 	}
+}
+
+void bmf::FlatNormalGenerator::getFlatNormal(const Triangle& triangle, float* destNormal)
+{
+	const auto p0 = toVec3(triangle.vertex[0].get(Position));
+	const auto p1 = toVec3(triangle.vertex[1].get(Position));
+	const auto p2 = toVec3(triangle.vertex[2].get(Position));
+
+	const auto v1 = p1 - p0; // p0p1 vec
+	const auto v2 = p2 - p0; // p0p2 vec
+
+	auto& n = *reinterpret_cast<glm::vec3*>(destNormal);
+	n = glm::cross(v1, v2);
+	n = glm::normalize(n);
 }
