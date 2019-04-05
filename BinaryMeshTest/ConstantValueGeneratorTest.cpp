@@ -43,4 +43,6 @@ TEST(TestSuite, ConstantValue)
 	EXPECT_EQ(res.getVertices()[7], vertices[5]); // original
 	EXPECT_EQ(res.getVertices()[8], texValue[0]); // new
 	EXPECT_EQ(res.getVertices()[9], texValue[1]); // new
+
+	EXPECT_NO_THROW(res.verify());
 }

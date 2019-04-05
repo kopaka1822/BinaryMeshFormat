@@ -19,6 +19,7 @@ TEST(TestSuite, GenerateRemove)
 	};
 
 	BinaryMesh m1(Texcoord0 | Position, vertices, indices, shapes);
+	EXPECT_NO_THROW(m1.verify());
 
 	// removing texcoords
 	BinaryMesh res(m1);
@@ -35,6 +36,8 @@ TEST(TestSuite, GenerateRemove)
 		0.5f, 0.6f, // vertex 3
 		0.7f, 0.9f, // vertex 4
 	}));
+
+	EXPECT_NO_THROW(res.verify());
 }
 
 TEST(TestSuite, RemoveDuplicates)
@@ -54,6 +57,7 @@ TEST(TestSuite, RemoveDuplicates)
 	};
 
 	BinaryMesh m1(Texcoord0, vertices, indices, shapes);
+	EXPECT_NO_THROW(m1.verify());
 	m1.removeDuplicateVertices();
 
 	const std::vector<float> expectedVertices = {
@@ -67,6 +71,7 @@ TEST(TestSuite, RemoveDuplicates)
 
 	EXPECT_EQ(m1.getVertices(), expectedVertices);
 	EXPECT_EQ(m1.getIndices(), expectedIndices);
+	EXPECT_NO_THROW(m1.verify());
 }
 
 TEST(TestSuite, RemoveUnusedVertices)
@@ -108,4 +113,5 @@ TEST(TestSuite, RemoveUnusedVertices)
 
 	EXPECT_EQ(m1.getVertices(), expectedVertices);
 	EXPECT_EQ(m1.getIndices(), expectedIndices);
+	EXPECT_NO_THROW(m1.verify());
 }

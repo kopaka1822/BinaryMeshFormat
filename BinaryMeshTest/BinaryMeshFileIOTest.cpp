@@ -19,6 +19,7 @@ TEST(TestSuite, LoadSave)
 	};
 
 	BinaryMesh m1(Texcoord0 | Position, vertices, indices, shapes);
+	EXPECT_NO_THROW(m1.verify());
 
 	m1.saveToFile("LoadSaveTest.bmf");
 
@@ -30,5 +31,5 @@ TEST(TestSuite, LoadSave)
 
 	EXPECT_EQ(m1.getShapes().size(), m2.getShapes().size());
 	EXPECT_EQ(memcmp(m1.getShapes().data(), m2.getShapes().data(), m1.getShapes().size() * sizeof(BinaryMesh::Shape)), 0);
-
+	EXPECT_NO_THROW(m1.verify());
 }

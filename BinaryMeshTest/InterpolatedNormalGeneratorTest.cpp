@@ -40,4 +40,6 @@ TEST(TestSuite, InterpolatedNormals)
 	EXPECT_EQ(res.getVertices(), expectedVertices);
 	// indices remain
 	EXPECT_EQ(res.getIndices(), m1.getIndices());
+
+	EXPECT_NO_THROW(res.verify());
 }

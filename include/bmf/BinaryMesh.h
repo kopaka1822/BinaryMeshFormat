@@ -39,6 +39,10 @@ namespace bmf
 		/// \brief returns byte size of one vertex
 		uint32_t getAttributeByteStride() const;
 		uint32_t getNumVertices() const;
+		/// \brief checks if the mesh has a valid amount of indices/vertices
+		/// and no index that goes beyond the buffer.
+		/// \throw std::runtime error if something is wrong
+		void verify() const;
 #pragma endregion
 #pragma region FileIO
 		static BinaryMesh loadFromFile(const std::string& filename);
@@ -126,6 +130,50 @@ namespace bmf
 	{
 		const auto stride = getAttributeElementStride(m_attributes);
 		return m_vertices.size() / stride;
+	}
+
+	inline void BinaryMesh::verify() const
+	{
+		// basic tests
+		if (m_attributes == 0) 
+			throw std::runtime_error("no attributes provided");
+		if (m_indices.size() % 3 != 0) 
+			throw std::runtime_error("indices are not a multiple of 3");
+		const auto stride = getAttributeElementStride(m_attributes);
+		if (m_vertices.size() % stride != 0) 
+			throw std::runtime_error("vertices are not a multiple of the underlying attribute element stride");
+
+		// index ranges
+		const auto numVertices = m_vertices.size() / stride;
+		for(auto& i : m_indices)
+		{
+			if (i >= numVertices)
+				throw std::runtime_error("index out of range. value: " + std::to_string(i));
+		}
+
+		// shape ranges
+		const auto numIndices = m_indices.size();
+		size_t curShape = 0;
+		for(auto& s : m_shapes)
+		{
+			if (s.indexOffset % 3 != 0) 
+				throw std::runtime_error("shape index offset is not a multiple of 3 for shape " + std::to_string(curShape));
+			if (s.indexOffset >= numIndices)
+				throw std::runtime_error("shape index offset out of range for shape " + std::to_string(curShape));
+			if (s.indexCount % 3 != 0)
+				throw std::runtime_error("shape index count is not a multiple of 3 for shape " + std::to_string(curShape));
+			if (s.indexOffset + s.indexCount > numIndices)
+				throw std::runtime_error("shape index count out of range for shape " + std::to_string(curShape));
+			++curShape;
+		}
+
+		// empty tests
+		if (m_shapes.size() == 0)
+			throw std::runtime_error("no shapes");
+		if (m_vertices.size() == 0)
+			throw std::runtime_error("no vertices");
+		if (m_indices.size() == 0)
+			throw std::runtime_error("no indices");
 	}
 #pragma endregion
 #pragma region FileIO

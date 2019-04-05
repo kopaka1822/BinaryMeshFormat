@@ -44,6 +44,8 @@ TEST(TestSuite, FlatNormalsDifferentNormals) // two triangles with different nor
 	
 	EXPECT_EQ(res.getVertices(), expectedVertices);
 	EXPECT_EQ(res.getIndices(), expectedIndices);
+
+	EXPECT_NO_THROW(res.verify());
 }
 
 TEST(TestSuite, FlatNormalsSameNormals) // two triangles with the same normals
@@ -82,4 +84,6 @@ TEST(TestSuite, FlatNormalsSameNormals) // two triangles with the same normals
 	EXPECT_EQ(res.getVertices(), expectedVertices);
 	// indices should remain
 	EXPECT_EQ(res.getIndices(), indices);
+
+	EXPECT_NO_THROW(res.verify());
 }

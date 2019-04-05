@@ -22,6 +22,7 @@ TEST(TestSuite, Split)
 	};
 
 	BinaryMesh baseMesh(Texcoord0 | Position, vertices, indices, shapes);
+	EXPECT_NO_THROW(baseMesh.verify());
 
 	const auto splitted = baseMesh.splitShapes();
 	EXPECT_EQ(splitted.size(), 2);
@@ -41,6 +42,10 @@ TEST(TestSuite, Split)
 	// adjusted offset
 	EXPECT_EQ(splitted[1].getShapes()[0].indexOffset, 0);
 	EXPECT_EQ(splitted[1].getShapes()[0].materialId, 7);
+	for(const auto& s : splitted)
+	{
+		EXPECT_NO_THROW(s.verify());
+	}
 }
 
 TEST(TestSuite, Merge)
@@ -74,6 +79,8 @@ TEST(TestSuite, Merge)
 	std::vector<BinaryMesh> meshes;
 	meshes.emplace_back(Position | Texcoord0, vertices1, indices1, shapes1);
 	meshes.emplace_back(Position | Texcoord0, vertices2, indices2, shapes2);
+	EXPECT_NO_THROW(meshes[0].verify());
+	EXPECT_NO_THROW(meshes[1].verify());
 
 	auto merged = BinaryMesh::mergeShapes(meshes);
 
@@ -105,6 +112,7 @@ TEST(TestSuite, Merge)
 	EXPECT_EQ(merged.getVertices()[vertices1.size()], vertices2[0]);
 	EXPECT_EQ(merged.getVertices()[vertices1.size() + stride], vertices2[stride]);
 	EXPECT_EQ(merged.getVertices()[vertices1.size() + 2 * stride], vertices2[2 * stride]);
+	EXPECT_NO_THROW(merged.verify());
 }
 
 TEST(TestSuite, MergeError)
