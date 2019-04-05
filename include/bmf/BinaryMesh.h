@@ -143,6 +143,11 @@ namespace bmf
 		if (m_vertices.size() % stride != 0) 
 			throw std::runtime_error("vertices are not a multiple of the underlying attribute element stride");
 
+		// are attribute flags valid
+		const uint32_t lastAttributeValue = Attributes::SIZE - 1;
+		if ((m_attributes & ~((lastAttributeValue << 1) - 1)) != 0)
+			throw std::runtime_error("non existent attribute flags were set");
+
 		// index ranges
 		const auto numVertices = m_vertices.size() / stride;
 		for(auto& i : m_indices)
