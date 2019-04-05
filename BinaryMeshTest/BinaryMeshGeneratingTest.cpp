@@ -68,3 +68,44 @@ TEST(TestSuite, RemoveDuplicates)
 	EXPECT_EQ(m1.getVertices(), expectedVertices);
 	EXPECT_EQ(m1.getIndices(), expectedIndices);
 }
+
+TEST(TestSuite, RemoveUnusedVertices)
+{
+	const std::vector<float> vertices = {
+		0.0f, 1.0f, // vertex 0
+		2.0f, 3.0f, // vertex 1
+		4.0f, 5.0f, // vertex 2
+		6.0f, 7.0f, // vertex 3
+		8.0f, 9.0f, // vertex 4
+		0.1f, 0.2f, // vertex 5
+	};
+	const std::vector<uint32_t> indices = {
+		0, 1, 3, // triangle 1
+		1, 0, 3, // triangle 2
+		1, 3, 5, // triangle 3
+	};
+	const std::vector<BinaryMesh::Shape> shapes = {
+		BinaryMesh::Shape{0, 9, 2}, // shape
+	};
+
+	BinaryMesh m1(Texcoord0, vertices, indices, shapes);
+	m1.removeUnusedVertices();
+
+	// 2 and 4 were unused
+	const std::vector<float> expectedVertices = {
+		0.0f, 1.0f, // vertex 0
+		2.0f, 3.0f, // vertex 1
+		//4.0f, 5.0f, // vertex 2
+		6.0f, 7.0f, // vertex 3
+		//8.0f, 9.0f, // vertex 4
+		0.1f, 0.2f, // vertex 5
+	};
+	const std::vector<uint32_t> expectedIndices = {
+		0, 1, 2, // triangle 1
+		1, 0, 2, // triangle 2
+		1, 2, 3, // triangle 3
+	};
+
+	EXPECT_EQ(m1.getVertices(), expectedVertices);
+	EXPECT_EQ(m1.getIndices(), expectedIndices);
+}

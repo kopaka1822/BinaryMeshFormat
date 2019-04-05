@@ -38,6 +38,7 @@ namespace bmf
 		uint32_t getAttributeByteOffset(Attributes a) const;
 		/// \brief returns byte size of one vertex
 		uint32_t getAttributeByteStride() const;
+		uint32_t getNumVertices() const;
 #pragma endregion
 #pragma region FileIO
 		static BinaryMesh loadFromFile(const std::string& filename);
@@ -51,6 +52,7 @@ namespace bmf
 		void changeAttributes(uint32_t newAttributes,
 		                            const std::vector<std::unique_ptr<VertexGenerator>>& generators);
 		void removeDuplicateVertices();
+		void removeUnusedVertices();
 #pragma endregion
 #pragma region Ctor
 		BinaryMesh(uint32_t attributes, std::vector<float> vertices, std::vector<uint32_t> indices,
@@ -118,6 +120,12 @@ namespace bmf
 	inline uint32_t BinaryMesh::getAttributeByteStride() const
 	{
 		return bmf::getAttributeByteOffset(m_attributes, Attributes::SIZE);
+	}
+
+	inline uint32_t BinaryMesh::getNumVertices() const
+	{
+		const auto stride = getAttributeElementStride(m_attributes);
+		return m_vertices.size() / stride;
 	}
 #pragma endregion
 #pragma region FileIO
@@ -469,6 +477,55 @@ namespace bmf
 		}
 
 		// shapes remain because the index offset did not change
+	}
+
+	inline void BinaryMesh::removeUnusedVertices()
+	{
+		const auto stride = getAttributeElementStride(m_attributes);
+		const auto numVertices = m_vertices.size() / stride;
+		std::vector<bool> used(numVertices, false);
+
+		for (auto i : m_indices)
+			used[i] = true;
+
+		// create offset map
+		// find the first unused one
+		size_t firstUnused = 0;
+		while (firstUnused < numVertices && used[firstUnused])
+			++firstUnused;
+
+		if (firstUnused == numVertices) return; // all vertices were used
+
+		// create offset map
+		// table[a - firstUnused] = b means: the vertex that was on index a is now on index b
+		std::vector<uint32_t> newVertexIndexTable(numVertices - firstUnused);
+
+		auto curIndex = firstUnused;
+		for(size_t i = firstUnused; i < numVertices; ++i)
+		{
+			newVertexIndexTable[i - firstUnused] = curIndex;
+			if (used[i]) ++curIndex;
+		}
+
+		// move vertices
+		for(size_t i = firstUnused; i < numVertices; ++i)
+		{
+			if (used[i])
+				std::copy(
+					m_vertices.begin() + i * stride,
+					m_vertices.begin() + (i + 1) * stride,
+					m_vertices.begin() + newVertexIndexTable[i - firstUnused] * stride);
+		}
+		m_vertices.resize(curIndex * stride);
+
+		// adjust indices
+		for(auto& i : m_indices)
+		{
+			if(i >= firstUnused)
+			{
+				i = newVertexIndexTable[i - firstUnused];
+			}
+		}
 	}
 #pragma endregion
 #pragma region Ctor
