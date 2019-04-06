@@ -46,7 +46,7 @@ namespace bmf
 #pragma endregion
 #pragma region FileIO
 		static BinaryMesh loadFromFile(const std::string& filename);
-		void saveToFile(const std::string& filename);
+		void saveToFile(const std::string& filename) const;
 #pragma endregion
 #pragma region Grouping
 		std::vector<BinaryMesh> splitShapes() const;
@@ -228,7 +228,7 @@ namespace bmf
 		return m;
 	}
 
-	inline void BinaryMesh::saveToFile(const std::string& filename)
+	inline void BinaryMesh::saveToFile(const std::string& filename) const
 	{
 		std::fstream f(filename, std::ios::out | std::ios::binary);
 
