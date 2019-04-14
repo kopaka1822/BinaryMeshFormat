@@ -31,8 +31,11 @@ namespace bmf
 #pragma region Getter
 		/// \brief returns bitmask of all used attributes (see Attributes enum)
 		uint32_t getAttributes() const;
+		std::vector<float>& getVertices();
 		const std::vector<float>& getVertices() const;
+		std::vector<uint32_t>& getIndices();
 		const std::vector<uint32_t>& getIndices() const;
+		std::vector<Shape>& getShapes();
 		const std::vector<Shape>& getShapes() const;
 		/// \brief returns byte offset to the attribute
 		uint32_t getAttributeByteOffset(Attributes a) const;
@@ -101,14 +104,29 @@ namespace bmf
 		return m_attributes;
 	}
 
+	inline std::vector<float>& BinaryMesh::getVertices()
+	{
+		return m_vertices;
+	}
+
 	inline const std::vector<float>& BinaryMesh::getVertices() const
 	{
 		return m_vertices;
 	}
 
+	inline std::vector<uint32_t>& BinaryMesh::getIndices()
+	{
+		return m_indices;
+	}
+
 	inline const std::vector<uint32_t>& BinaryMesh::getIndices() const
 	{
 		return m_indices;
+	}
+
+	inline std::vector<BinaryMesh::Shape>& BinaryMesh::getShapes()
+	{
+		return m_shapes;
 	}
 
 	inline const std::vector<BinaryMesh::Shape>& BinaryMesh::getShapes() const
