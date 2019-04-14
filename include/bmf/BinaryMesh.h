@@ -46,7 +46,7 @@ namespace bmf
 #pragma endregion
 #pragma region FileIO
 		static BinaryMesh loadFromFile(const std::string& filename);
-		void saveToFile(const std::string& filename);
+		void saveToFile(const std::string& filename) const;
 #pragma endregion
 #pragma region Grouping
 		std::vector<BinaryMesh> splitShapes() const;
@@ -129,7 +129,7 @@ namespace bmf
 	inline uint32_t BinaryMesh::getNumVertices() const
 	{
 		const auto stride = getAttributeElementStride(m_attributes);
-		return m_vertices.size() / stride;
+		return uint32_t(m_vertices.size() / stride);
 	}
 
 	inline void BinaryMesh::verify() const
@@ -228,7 +228,7 @@ namespace bmf
 		return m;
 	}
 
-	inline void BinaryMesh::saveToFile(const std::string& filename)
+	inline void BinaryMesh::saveToFile(const std::string& filename) const
 	{
 		std::fstream f(filename, std::ios::out | std::ios::binary);
 
@@ -306,8 +306,8 @@ namespace bmf
 			dst.m_shapes[0].indexOffset = 0; // starts immediately
 
 			// vertex range
-			size_t firstVertexIndex = m_vertices.size() - 1;
-			size_t lastVertexIndex = 0;
+			auto firstVertexIndex = uint32_t(m_vertices.size() - 1);
+			auto lastVertexIndex = uint32_t(0);
 
 			dst.m_indices.resize(src.indexCount);
 			// copy indices and remember vertex offsets
@@ -375,9 +375,9 @@ namespace bmf
 		for (const auto& src : meshes)
 		{
 			// start index of the new vertices
-			auto vertexOffset = (curVertex - m.m_vertices.begin()) / attributeCount;
+			auto vertexOffset = uint32_t((curVertex - m.m_vertices.begin()) / attributeCount);
 			// additional index offset for shapes
-			auto indexOffset = curIndex - m.m_indices.begin();
+			auto indexOffset = uint32_t(curIndex - m.m_indices.begin());
 
 			curVertex = std::copy(src.m_vertices.begin(), src.m_vertices.end(), curVertex);
 			curIndex = std::transform(src.m_indices.begin(), src.m_indices.end(), curIndex, [vertexOffset](auto index)
@@ -465,9 +465,9 @@ namespace bmf
 		std::unordered_map<RefVertex, std::vector<uint32_t>> map;
 
 		const auto stride = getAttributeElementStride(m_attributes);
-		const auto numVertices = m_vertices.size() / stride;
+		const auto numVertices = uint32_t(m_vertices.size() / stride);
 
-		for(size_t i = 0; i < numVertices; ++i)
+		for(uint32_t i = 0; i < numVertices; ++i)
 		{
 			const RefVertex v(m_attributes, &m_vertices[i * stride]);
 			auto it = map.find(v);
@@ -535,7 +535,7 @@ namespace bmf
 	inline void BinaryMesh::removeUnusedVertices()
 	{
 		const auto stride = getAttributeElementStride(m_attributes);
-		const auto numVertices = m_vertices.size() / stride;
+		const auto numVertices = uint32_t(m_vertices.size() / stride);
 		std::vector<bool> used(numVertices, false);
 
 		for (auto i : m_indices)
@@ -543,7 +543,7 @@ namespace bmf
 
 		// create offset map
 		// find the first unused one
-		size_t firstUnused = 0;
+		auto firstUnused = uint32_t(0);
 		while (firstUnused < numVertices && used[firstUnused])
 			++firstUnused;
 
@@ -554,7 +554,7 @@ namespace bmf
 		std::vector<uint32_t> newVertexIndexTable(numVertices - firstUnused);
 
 		auto curIndex = firstUnused;
-		for(size_t i = firstUnused; i < numVertices; ++i)
+		for(auto i = firstUnused; i < numVertices; ++i)
 		{
 			newVertexIndexTable[i - firstUnused] = curIndex;
 			if (used[i]) ++curIndex;
@@ -684,8 +684,8 @@ namespace bmf
 			assert(valueVertices.size());
 
 			// add vertices
-			const auto startIdx = newVertices.size();
-			const auto startElementIdx = startIdx / newVertexStride;
+			const auto startIdx = uint32_t(newVertices.size());
+			const auto startElementIdx = uint32_t(startIdx / newVertexStride);
 
 			newVertices.resize(newVertices.size() + valueVertices.size() * newVertexStride);
 			// copy vertices
