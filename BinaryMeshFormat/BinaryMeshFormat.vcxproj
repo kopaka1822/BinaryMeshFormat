@@ -117,6 +117,7 @@
   <ItemGroup>
     <ClInclude Include="..\include\bmf\Attributes.h" />
     <ClInclude Include="..\include\bmf\BinaryMesh.h" />
+    <ClInclude Include="..\include\bmf\BoundingBox.h" />
     <ClInclude Include="..\include\bmf\generators\ConstantValueGenerator.h" />
     <ClInclude Include="..\include\bmf\generators\FlatNormalGenerator.h" />
     <ClInclude Include="..\include\bmf\generators\glm.h" />

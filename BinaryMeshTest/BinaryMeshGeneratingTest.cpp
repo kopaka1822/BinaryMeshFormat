@@ -15,7 +15,7 @@ TEST(TestSuite, GenerateRemove)
 		1, 2, 3, // triangle 2
 	};
 	const std::vector<BinaryMesh::Shape> shapes = {
-		BinaryMesh::Shape{0, 6, 2}, // shape
+		BinaryMesh::Shape{0, 6, 0, 4, 2}, // shape
 	};
 
 	BinaryMesh m1(Texcoord0 | Position, vertices, indices, shapes);
@@ -53,7 +53,7 @@ TEST(TestSuite, RemoveDuplicates)
 		1, 2, 3, // triangle 2
 	};
 	const std::vector<BinaryMesh::Shape> shapes = {
-		BinaryMesh::Shape{0, 6, 2}, // shape
+		BinaryMesh::Shape{0, 6, 0,4, 2}, // shape
 	};
 
 	BinaryMesh m1(Texcoord0, vertices, indices, shapes);
@@ -68,9 +68,11 @@ TEST(TestSuite, RemoveDuplicates)
 		0, 1, 1, // triangle 1
 		1, 1, 0, // triangle 2
 	};
+	const BinaryMesh::Shape expectedShape = { 0, 6, 0, 2, 2 };
 
 	EXPECT_EQ(m1.getVertices(), expectedVertices);
 	EXPECT_EQ(m1.getIndices(), expectedIndices);
+	EXPECT_EQ(memcmp(m1.getShapes().data(), &expectedShape, sizeof(expectedShape)), 0);
 	EXPECT_NO_THROW(m1.verify());
 }
 
@@ -90,10 +92,11 @@ TEST(TestSuite, RemoveUnusedVertices)
 		1, 3, 5, // triangle 3
 	};
 	const std::vector<BinaryMesh::Shape> shapes = {
-		BinaryMesh::Shape{0, 9, 2}, // shape
+		BinaryMesh::Shape{0, 9, 0, 6, 2}, // shape
 	};
 
 	BinaryMesh m1(Texcoord0, vertices, indices, shapes);
+	EXPECT_NO_THROW(m1.verify());
 	m1.removeUnusedVertices();
 
 	// 2 and 4 were unused
@@ -110,8 +113,10 @@ TEST(TestSuite, RemoveUnusedVertices)
 		1, 0, 2, // triangle 2
 		1, 2, 3, // triangle 3
 	};
+	const BinaryMesh::Shape expectedShape = { 0, 9, 0, 4, 2 };
 
 	EXPECT_EQ(m1.getVertices(), expectedVertices);
 	EXPECT_EQ(m1.getIndices(), expectedIndices);
+	EXPECT_EQ(memcmp(m1.getShapes().data(), &expectedShape, sizeof(expectedShape)), 0);
 	EXPECT_NO_THROW(m1.verify());
 }

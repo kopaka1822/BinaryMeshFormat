@@ -16,7 +16,7 @@ TEST(TestSuite, ConstantValue)
 	1, 2, 3, // triangle 2
 	};
 	const std::vector<BinaryMesh::Shape> shapes = {
-		BinaryMesh::Shape{0, 6, 2}, // shape
+		BinaryMesh::Shape{0, 6, 0, 4, 2}, // shape
 	};
 
 	BinaryMesh m1(Position, vertices, indices, shapes);
