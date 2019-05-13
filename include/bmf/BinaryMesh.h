@@ -198,7 +198,7 @@ namespace bmf
 				throw std::runtime_error("shape zero index count for shape " + std::to_string(curShape));
 
 			// check indices for this shape
-			size_t maxVertexIndex = 0;
+			uint32_t maxVertexIndex = 0;
 			for(size_t i = s.indexOffset, end = s.indexOffset + s.indexCount; i != end; ++i)
 			{
 				maxVertexIndex = std::max(maxVertexIndex, m_indices[i]);
@@ -619,7 +619,7 @@ namespace bmf
 		m_indices = std::move(newIndices);
 
 		// shape indices: index offsets and count have not changed. only the values of the indices changed
-		m_shapes[0].vertexCount = m_vertices.size() / newVertexStride;
+		m_shapes[0].vertexCount = uint32_t(m_vertices.size() / newVertexStride);
 	}
 
 	inline void BinaryMesh::removeDuplicateVertices()
@@ -695,7 +695,7 @@ namespace bmf
 		}
 
 		// only vertex count changed (offset is 0 anyways)
-		m_shapes[0].vertexCount = m_vertices.size() / stride;
+		m_shapes[0].vertexCount = uint32_t(m_vertices.size() / stride);
 	}
 
 	inline void BinaryMesh::removeUnusedVertices()
@@ -750,7 +750,7 @@ namespace bmf
 		}
 
 		// only vertex count changed
-		m_shapes[0].vertexCount = m_vertices.size() / stride;
+		m_shapes[0].vertexCount = uint32_t(m_vertices.size() / stride);
 	}
 #pragma endregion
 #pragma region Ctor
