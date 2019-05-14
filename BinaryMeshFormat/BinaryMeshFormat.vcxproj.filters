@@ -55,5 +55,8 @@
     <ClCompile Include="..\src\InterpolatedNormalGenerator.cpp">
       <Filter>Header Files\generators</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\BinaryMesh.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

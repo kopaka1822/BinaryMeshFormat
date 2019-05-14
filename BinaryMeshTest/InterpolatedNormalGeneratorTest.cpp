@@ -15,10 +15,10 @@ TEST(TestSuite, InterpolatedNormals)
 		3, 0, 1, // triangle 2 (standing and facing in positive z)
 	};
 	const std::vector<BinaryMesh::Shape> shapes = {
-		BinaryMesh::Shape{0, 6, 0, 4, 2}, // shape
+		BinaryMesh::Shape{0, 6, 0, 4, 0, 1, 2}, // shape
 	};
 
-	BinaryMesh m1(Position, vertices, indices, shapes);
+	BinaryMesh m1(Position, vertices, indices, shapes, getIdentityVec(1));
 
 	std::vector<std::unique_ptr<VertexGenerator>> generators;
 	generators.emplace_back(new InterpolatedNormalGenerator());

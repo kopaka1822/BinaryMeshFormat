@@ -32,6 +32,18 @@
   <ImportGroup Label="Shared" />
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IncludePath>..\dependencies\glm;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IncludePath>..\dependencies\glm;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>..\dependencies\glm;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>..\dependencies\glm;$(IncludePath)</IncludePath>
+  </PropertyGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
   </ItemGroup>
@@ -41,6 +53,7 @@
     <ClCompile Include="BinaryMeshGeneratingTest.cpp" />
     <ClCompile Include="BinaryMeshGroupingTest.cpp" />
     <ClCompile Include="ConstantValueGeneratorTest.cpp" />
+    <ClCompile Include="DeinstanceTest.cpp" />
     <ClCompile Include="FlatNormalGeneratorTest.cpp" />
     <ClCompile Include="InterpolatedNormalGeneratorTest.cpp" />
     <ClCompile Include="pch.cpp">

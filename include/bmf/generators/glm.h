@@ -1,9 +1,13 @@
 #pragma once
 // important includes for glm
+#ifndef GLM_FORCE_LEFT_HANDED
 #define GLM_FORCE_LEFT_HANDED
+#endif
+#ifndef GLM_GTC_matrix_transform
 #define GLM_GTC_matrix_transform
-#include "../../../dependencies/glm/glm/glm.hpp"
-#include "../../../dependencies/glm/glm/gtc/type_ptr.hpp"
+#endif
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 // extensions
 namespace bmf

@@ -18,12 +18,17 @@ TEST(TestSuite, Split)
 		1, 2, 3, // triangle 2 shape 1
 		1, 0, 2, // triangle 3 shape 2 (indices start by 0 again with offset 4)
 	};
+	const std::vector<glm::mat4> instances = {
+		glm::mat4(1.0f),
+		glm::mat4(2.0f),
+		glm::mat4(3.0f),
+	};
 	const std::vector<BinaryMesh::Shape> shapes = {
-		BinaryMesh::Shape{0, 6, 0, 4, 2}, // shape 1
-		BinaryMesh::Shape{6, 3, 4, 3, 7}, // shape 2
+		BinaryMesh::Shape{0, 6, 0, 4, 0, 1, 2}, // shape 1
+		BinaryMesh::Shape{6, 3, 4, 3, 1, 2, 7}, // shape 2
 	};
 
-	BinaryMesh baseMesh(Texcoord0 | Position, vertices, indices, shapes);
+	BinaryMesh baseMesh(Texcoord0 | Position, vertices, indices, shapes, instances);
 	EXPECT_NO_THROW(baseMesh.verify());
 
 	const auto splitted = baseMesh.splitShapes();
@@ -41,9 +46,14 @@ TEST(TestSuite, Split)
 	EXPECT_EQ(splitted[0].getShapes().size(), 1);
 	EXPECT_EQ(splitted[1].getShapes().size(), 1);
 
+	// check instances
+	EXPECT_EQ(splitted[0].getInstanceTransforms(), std::vector<glm::mat4>(instances.begin(), instances.begin() + shapes[0].instanceCount));
+	EXPECT_EQ(splitted[1].getInstanceTransforms(), std::vector<glm::mat4>(instances.begin() + shapes[1].instanceOffset, instances.end()));
+
 	// adjusted offset
 	EXPECT_EQ(splitted[1].getShapes()[0].indexOffset, 0);
 	EXPECT_EQ(splitted[1].getShapes()[0].vertexOffset, 0);
+	EXPECT_EQ(splitted[1].getShapes()[0].instanceOffset, 0);
 	EXPECT_EQ(splitted[1].getShapes()[0].materialId, 7);
 	for(const auto& s : splitted)
 	{
@@ -64,7 +74,11 @@ TEST(TestSuite, Merge)
 		1, 2, 3, // triangle 2
 	};
 	const std::vector<BinaryMesh::Shape> shapes1 = {
-		BinaryMesh::Shape{0, 6, 0, 4, 2}, // shape 1
+		BinaryMesh::Shape{0, 6, 0, 4, 0, 2, 2}, // shape 1
+	};
+	const std::vector<glm::mat4> instances1 = {
+		glm::mat4(1.0f),
+		glm::mat4(2.0f),
 	};
 
 	const std::vector<float> vertices2 = {
@@ -76,12 +90,15 @@ TEST(TestSuite, Merge)
 		1, 0, 2, // triangle 1
 	};
 	const std::vector<BinaryMesh::Shape> shapes2 = {
-		BinaryMesh::Shape{0, 3, 0, 3, 7}, // shape 1
+		BinaryMesh::Shape{0, 3, 0, 3, 0, 1, 7}, // shape 1
+	};
+	const std::vector<glm::mat4> instances2 = {
+		glm::mat4(3.0f),
 	};
 
 	std::vector<BinaryMesh> meshes;
-	meshes.emplace_back(Position | Texcoord0, vertices1, indices1, shapes1);
-	meshes.emplace_back(Position | Texcoord0, vertices2, indices2, shapes2);
+	meshes.emplace_back(Position | Texcoord0, vertices1, indices1, shapes1, instances1);
+	meshes.emplace_back(Position | Texcoord0, vertices2, indices2, shapes2, instances2);
 	EXPECT_NO_THROW(meshes[0].verify());
 	EXPECT_NO_THROW(meshes[1].verify());
 
@@ -116,6 +133,10 @@ TEST(TestSuite, Merge)
 	EXPECT_TRUE(std::equal(merged.getVertices().begin(), merged.getVertices().begin() + vertices1.size(), vertices1.begin()));
 	EXPECT_TRUE(std::equal(merged.getVertices().begin() + vertices1.size(), merged.getVertices().end(), vertices2.begin()));
 
+	// check instances
+	EXPECT_TRUE(std::equal(merged.getInstanceTransforms().begin(), merged.getInstanceTransforms().begin() + instances1.size(), instances1.begin()));
+	EXPECT_TRUE(std::equal(merged.getInstanceTransforms().begin() + instances1.size(), merged.getInstanceTransforms().end(), instances2.begin()));
+
 	EXPECT_NO_THROW(merged.verify());
 }
 
@@ -123,8 +144,8 @@ TEST(TestSuite, MergeError)
 {
 	// incompatible attributes
 	std::vector<BinaryMesh> meshes;
-	meshes.emplace_back(Normal, std::vector<float>{}, std::vector<uint32_t>{}, std::vector<BinaryMesh::Shape>{});
-	meshes.emplace_back(Position, std::vector<float>{}, std::vector<uint32_t>{}, std::vector<BinaryMesh::Shape>{});
+	meshes.emplace_back(Normal, std::vector<float>{}, std::vector<uint32_t>{}, std::vector<BinaryMesh::Shape>{}, getIdentityVec(0));
+	meshes.emplace_back(Position, std::vector<float>{}, std::vector<uint32_t>{}, std::vector<BinaryMesh::Shape>{}, getIdentityVec(0));
 
 	EXPECT_THROW(BinaryMesh::mergeShapes(meshes), std::runtime_error);
 }
