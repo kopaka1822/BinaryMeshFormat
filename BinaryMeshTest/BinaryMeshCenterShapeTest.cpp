@@ -1,5 +1,5 @@
 #include "pch.h"
-
+/*
 #define TestSuite BinaryMeshTest
 
 TEST(TestSuite, ConterShape)
@@ -33,4 +33,4 @@ TEST(TestSuite, ConterShape)
 	EXPECT_EQ(m.getVertices(), expectedVertices);
 	auto mat = glm::vec3(0.5f, 0.5f, 0.0f);
 	EXPECT_EQ(m.getInstanceTransforms()[0], mat);
-}
+}*/

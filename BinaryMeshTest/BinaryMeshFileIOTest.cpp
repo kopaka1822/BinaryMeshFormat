@@ -15,10 +15,11 @@ TEST(TestSuite, LoadSave)
 		1, 2, 3, // triangle 2
 	};
 	const std::vector<BinaryMesh::Shape> shapes = {
-		BinaryMesh::Shape{0, 6, 0, 4, 0, 1, 2}, // shape
+		BinaryMesh::Shape{0, 6, 0, 4, /*0, 1,*/ 2}, // shape
 	};
 
-	BinaryMesh m1(Texcoord0 | Position, vertices, indices, shapes, getIdentityVec(1));
+	BinaryMesh m1(Texcoord0 | Position, vertices, indices, shapes);//, getIdentityVec(1));
+	m1.generateBoundingBoxes();
 	EXPECT_NO_THROW(m1.verify());
 
 	m1.saveToFile("LoadSaveTest.bmf");

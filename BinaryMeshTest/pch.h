@@ -13,7 +13,7 @@
 using namespace bmf;
 
 // returns vector of identity matrices
-inline std::vector<glm::vec3> getIdentityVec(size_t numInstances)
-{
-	return std::vector<glm::vec3>(numInstances, glm::vec3(0.0f));
-}
+//inline std::vector<glm::vec3> getIdentityVec(size_t numInstances)
+//{
+//	return std::vector<glm::vec3>(numInstances, glm::vec3(0.0f));
+//}

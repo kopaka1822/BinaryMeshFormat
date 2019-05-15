@@ -1,5 +1,5 @@
 #include "pch.h"
-
+/*
 #define TestSuite BinaryMeshTest
 
 TEST(TestSuite, InstanceMerge)
@@ -51,4 +51,4 @@ TEST(TestSuite, InstanceMerge)
 		EXPECT_LT(std::abs(transVec[i] - transVec2[i]), 0.0001f);
 
 	EXPECT_NO_THROW(meshes[0].verify());
-}
+}*/

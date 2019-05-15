@@ -15,10 +15,11 @@ TEST(TestSuite, FlatNormalsDifferentNormals) // two triangles with different nor
 		3, 0, 1, // triangle 2 (standing and facing in positive z)
 	};
 	const std::vector<BinaryMesh::Shape> shapes = {
-		BinaryMesh::Shape{0, 6, 0, 4, 0, 1, 2}, // shape
+		BinaryMesh::Shape{0, 6, 0, 4, /*0, 1,*/ 2}, // shape
 	};
 
-	BinaryMesh m1(Position, vertices, indices, shapes, getIdentityVec(1));
+	BinaryMesh m1(Position, vertices, indices, shapes);//, getIdentityVec(1));
+	m1.generateBoundingBoxes();
 
 	std::vector<std::unique_ptr<VertexGenerator>> generators;
 	generators.emplace_back(new FlatNormalGenerator());
@@ -61,10 +62,11 @@ TEST(TestSuite, FlatNormalsSameNormals) // two triangles with the same normals
 		0, 2, 3, // triangle 2 (laying on the ground with normal down)
 	};
 	const std::vector<BinaryMesh::Shape> shapes = {
-		BinaryMesh::Shape{0, 6, 0, 4, 0, 1, 2}, // shape
+		BinaryMesh::Shape{0, 6, 0, 4, /*0, 1,*/ 2}, // shape
 	};
 
-	BinaryMesh m1(Position, vertices, indices, shapes, getIdentityVec(1));
+	BinaryMesh m1(Position, vertices, indices, shapes);// , getIdentityVec(1));
+	m1.generateBoundingBoxes();
 
 	std::vector<std::unique_ptr<VertexGenerator>> generators;
 	generators.emplace_back(new FlatNormalGenerator());

@@ -39,7 +39,7 @@ namespace bmf
 		return m_shapes;
 	}
 
-	std::vector<BinaryMesh::InstanceData>& BinaryMesh::getInstanceTransforms()
+	/*std::vector<BinaryMesh::InstanceData>& BinaryMesh::getInstanceTransforms()
 	{
 		return m_instances;
 	}
@@ -47,7 +47,7 @@ namespace bmf
 	const std::vector<BinaryMesh::InstanceData>& BinaryMesh::getInstanceTransforms() const
 	{
 		return m_instances;
-	}
+	}*/
 
 	uint32_t BinaryMesh::getAttributeByteOffset(Attributes a) const
 	{
@@ -93,8 +93,8 @@ namespace bmf
 			{
 				if (s.vertexOffset != curVertexOffset)
 					throw std::runtime_error("shape vertex offset is not tightly packed");
-				if (s.instanceOffset != curInstanceOffset)
-					throw std::runtime_error("shape instance offset is not tightly packed");
+				//if (s.instanceOffset != curInstanceOffset)
+				//	throw std::runtime_error("shape instance offset is not tightly packed");
 				if (s.indexOffset % 3 != 0)
 					throw std::runtime_error("shape index offset is not a multiple of 3");
 				if (s.indexOffset >= numIndices)
@@ -105,8 +105,8 @@ namespace bmf
 					throw std::runtime_error("shape index count out of range");
 				if (s.indexCount == 0)
 					throw std::runtime_error("shape zero index count");
-				if (s.instanceCount == 0)
-					throw std::runtime_error("shape zero instances count");
+				//if (s.instanceCount == 0)
+				//	throw std::runtime_error("shape zero instances count");
 				if (s.vertexCount == 0)
 					throw std::runtime_error("shape zero vertex count");
 
@@ -123,10 +123,17 @@ namespace bmf
 				if (curVertexOffset > numVertices)
 					throw std::runtime_error("shape index out of range");
 
+				// check bounding boxes
+				if (m_attributes & Position)
+				{
+					if (s.bbox != calcBoundingBox(s))
+						throw std::runtime_error("shape bounding box not correct");
+				}
+
 				// check instances for this shape
-				curInstanceOffset += s.instanceCount;
-				if (curInstanceOffset > m_instances.size())
-					throw std::runtime_error("shape instance count out of range");
+				//curInstanceOffset += s.instanceCount;
+				//if (curInstanceOffset > m_instances.size())
+				//	throw std::runtime_error("shape instance count out of range");
 
 				++curShape;
 			}
@@ -183,8 +190,8 @@ namespace bmf
 		m.m_shapes = read<Shape>(f, ui32);
 
 		// read instances
-		ui32 = read<uint32_t>(f);
-		m.m_instances = read<InstanceData>(f, ui32);
+		//ui32 = read<uint32_t>(f);
+		//m.m_instances = read<InstanceData>(f, ui32);
 
 		// check file end signature
 		f >> sig[0] >> sig[1] >> sig[2];
@@ -221,8 +228,8 @@ namespace bmf
 		write(f, uint32_t(m_shapes.size()));
 		write(f, m_shapes);
 
-		write(f, uint32_t(m_instances.size()));
-		write(f, m_instances);
+		//write(f, uint32_t(m_instances.size()));
+		//write(f, m_instances);
 
 		// write end of file signature
 		f << 'E' << 'O' << 'F';
@@ -277,7 +284,7 @@ namespace bmf
 			// starts immediately
 			dst.m_shapes[0].indexOffset = 0;
 			dst.m_shapes[0].vertexOffset = 0;
-			dst.m_shapes[0].instanceOffset = 0;
+			//dst.m_shapes[0].instanceOffset = 0;
 
 			// copy indices and determine number of vertices to copy
 			dst.m_indices.resize(src.indexCount);
@@ -295,12 +302,12 @@ namespace bmf
 				dst.m_vertices.begin());
 
 			// copy instances
-			dst.m_instances.resize(src.instanceCount);
+			/*dst.m_instances.resize(src.instanceCount);
 			std::copy(
 				m_instances.begin() + src.instanceOffset,
 				m_instances.begin() + src.instanceOffset + src.instanceCount,
 				dst.m_instances.begin()
-			);
+			);*/
 		}
 
 		return meshes;
@@ -327,19 +334,19 @@ namespace bmf
 			m_totalVertices += src.m_vertices.size();
 			m_totalIndices += src.m_indices.size();
 			m_totalShapes += src.m_shapes.size();
-			m_totalInstances += src.m_instances.size();
+			//m_totalInstances += src.m_instances.size();
 		}
 
 		// resize buffers
 		m.m_shapes.resize(m_totalShapes);
 		m.m_indices.resize(m_totalIndices);
 		m.m_vertices.resize(m_totalVertices);
-		m.m_instances.resize(m_totalInstances);
+		//m.m_instances.resize(m_totalInstances);
 
 		auto curShape = m.m_shapes.begin();
 		auto curIndex = m.m_indices.begin();
 		auto curVertex = m.m_vertices.begin();
-		auto curInstance = m.m_instances.begin();
+		//auto curInstance = m.m_instances.begin();
 
 		// copy data
 		for (const auto& src : meshes)
@@ -348,17 +355,17 @@ namespace bmf
 			auto vertexOffset = uint32_t((curVertex - m.m_vertices.begin()) / attributeCount);
 			// additional index offset for shapes
 			auto indexOffset = uint32_t(curIndex - m.m_indices.begin());
-			auto instanceOffset = uint32_t(curInstance - m.m_instances.begin());
+			//auto instanceOffset = uint32_t(curInstance - m.m_instances.begin());
 
 			curVertex = std::copy(src.m_vertices.begin(), src.m_vertices.end(), curVertex);
 			curIndex = std::copy(src.m_indices.begin(), src.m_indices.end(), curIndex);
-			curInstance = std::copy(src.m_instances.begin(), src.m_instances.end(), curInstance);
+			//curInstance = std::copy(src.m_instances.begin(), src.m_instances.end(), curInstance);
 			curShape = std::transform(src.m_shapes.begin(), src.m_shapes.end(), curShape,
-				[indexOffset, vertexOffset, instanceOffset](Shape s)
+				[indexOffset, vertexOffset/*, instanceOffset*/](Shape s)
 			{
 				s.indexOffset += indexOffset;
 				s.vertexOffset += vertexOffset;
-				s.instanceOffset += instanceOffset;
+				//s.instanceOffset += instanceOffset;
 				return s;
 			});
 		}
@@ -568,6 +575,16 @@ namespace bmf
 		m_shapes[0].vertexCount = uint32_t(m_vertices.size() / newVertexStride);
 	}
 
+	BoundingBox BinaryMesh::calcBoundingBox(const Shape& s) const
+	{
+		const auto stride = getAttributeElementStride(m_attributes);
+		return getBoundingBox(
+			m_vertices.data() + s.vertexOffset * stride,
+			m_vertices.data() + (s.vertexOffset + s.vertexCount) * stride,
+			m_attributes
+		);
+	}
+
 	void BinaryMesh::removeDuplicateVertices()
 	{
 		expectSingleShape("BinaryMesh::removeDuplicateVertices");
@@ -699,7 +716,15 @@ namespace bmf
 		m_shapes[0].vertexCount = uint32_t(m_vertices.size() / stride);
 	}
 
-	void BinaryMesh::deinstanceShapes(std::vector<BinaryMesh>& meshes, float epsilon)
+	void BinaryMesh::generateBoundingBoxes()
+	{
+		for(auto& s : m_shapes)
+		{
+			s.bbox = calcBoundingBox(s);
+		}
+	}
+
+	/*void BinaryMesh::deinstanceShapes(std::vector<BinaryMesh>& meshes, float epsilon)
 	{
 		for(const auto& m : meshes)
 			m.expectSingleShape("BinaryMesh::deinstanceShapes");
@@ -830,7 +855,7 @@ namespace bmf
 					return mat * transformMatrix;
 				});
 
-				return true;*/
+				return true;*//*
 			});
 		}
 
@@ -863,13 +888,13 @@ namespace bmf
 		{
 			i += center;
 		}
-	}
+	}*/
 
 	BoundingBox BinaryMesh::getBoundingBox(const float* start, const float* end,
 		uint32_t attributes)
 	{
 		if (!(attributes & Position))
-			throw std::runtime_error("positions are requird to calculate bounding box");
+			throw std::runtime_error("positions are required to calculate bounding box");
 
 		BoundingBox r;
 		r.minX = r.minY = r.minZ = std::numeric_limits<float>::max();
@@ -897,13 +922,13 @@ namespace bmf
 #pragma endregion
 #pragma region Ctor
 	BinaryMesh::BinaryMesh(uint32_t attributes, std::vector<float> vertices, std::vector<uint32_t> indices,
-		std::vector<Shape> shapes, std::vector<InstanceData> instances)
+		std::vector<Shape> shapes/*, std::vector<InstanceData> instances*/)
 		:
 		m_vertices(move(vertices)),
 		m_indices(move(indices)),
 		m_shapes(move(shapes)),
-		m_attributes(attributes),
-		m_instances(move(instances))
+		m_attributes(attributes)
+		//m_instances(move(instances))
 	{
 	}
 #pragma endregion
