@@ -15,8 +15,8 @@ TEST(TestSuite, ConterShape)
 	const std::vector<BinaryMesh::Shape> shapes = {
 		BinaryMesh::Shape{0, 3, 0, 3, 0, 1, 2}, // shape 1
 	};
-	const std::vector<glm::mat4> instances = {
-		glm::mat4(1.0f),
+	const std::vector<glm::vec3> instances = {
+		glm::vec3(0.0f),
 	};
 
 	BinaryMesh m(Position | Texcoord0, vertices, indices, shapes, instances);
@@ -31,6 +31,6 @@ TEST(TestSuite, ConterShape)
 	};
 	
 	EXPECT_EQ(m.getVertices(), expectedVertices);
-	auto mat = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 0.0f));
+	auto mat = glm::vec3(0.5f, 0.5f, 0.0f);
 	EXPECT_EQ(m.getInstanceTransforms()[0], mat);
 }

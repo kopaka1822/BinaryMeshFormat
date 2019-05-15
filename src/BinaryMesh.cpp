@@ -39,12 +39,12 @@ namespace bmf
 		return m_shapes;
 	}
 
-	std::vector<glm::mat4>& BinaryMesh::getInstanceTransforms()
+	std::vector<BinaryMesh::InstanceData>& BinaryMesh::getInstanceTransforms()
 	{
 		return m_instances;
 	}
 
-	const std::vector<glm::mat4>& BinaryMesh::getInstanceTransforms() const
+	const std::vector<BinaryMesh::InstanceData>& BinaryMesh::getInstanceTransforms() const
 	{
 		return m_instances;
 	}
@@ -184,7 +184,7 @@ namespace bmf
 
 		// read instances
 		ui32 = read<uint32_t>(f);
-		m.m_instances = read<glm::mat4>(f, ui32);
+		m.m_instances = read<InstanceData>(f, ui32);
 
 		// check file end signature
 		f >> sig[0] >> sig[1] >> sig[2];
@@ -726,7 +726,47 @@ namespace bmf
 				// extract points from left
 				const auto stride = getAttributeElementStride(left.getAttributes());
 				// take vertices that are not very close to each other to improve precision
-				const auto step = left.m_vertices.size() / stride / 4;
+				
+				// left + translation = right
+				const float* l0 = left.m_vertices.data();
+				const float* r0 = right.m_vertices.data();
+				// determine lower and upper bound for translation for each vertex
+				glm::vec3 transMin;
+				glm::vec3 transMax;
+				transMax.x = transMin.x = r0[0] - l0[0];
+				transMax.y = transMin.y = r0[1] - l0[1];
+				transMax.z = transMin.z = r0[2] - l0[2];
+
+				// go through all vertices
+				for(const float* curLeft = left.m_vertices.data(), *curRight = right.m_vertices.data(), 
+					*end = left.m_vertices.data() + left.m_vertices.size();
+						curLeft < end; curLeft += stride, curRight += stride)
+				{
+					transMin[0] = std::min(transMin[0], curRight[0] - curLeft[0]);
+					transMin[1] = std::min(transMin[1], curRight[1] - curLeft[1]);
+					transMin[2] = std::min(transMin[2], curRight[2] - curLeft[2]);
+					transMax[0] = std::max(transMax[0], curRight[0] - curLeft[0]);
+					transMax[1] = std::max(transMax[1], curRight[1] - curLeft[1]);
+					transMax[2] = std::max(transMax[2], curRight[2] - curLeft[2]);
+				}
+
+				// if the difference between min an max is not high the translation should work
+				auto diff = transMax - transMin;
+				auto error = glm::dot(diff, diff);
+				// error too high?
+				if (error > epsilon) return false;
+
+				// this is an instance => transport instance information to left
+				left.m_shapes[0].instanceCount += right.m_shapes[0].instanceCount;
+				std::transform(right.m_instances.begin(), right.m_instances.end(), std::back_inserter(left.m_instances),
+					[trans = (transMin + transMax) / 2.0f](const glm::vec3& rightTrans)
+				{
+					return rightTrans + trans;
+				});
+				return true;
+
+				// more complex algorithm for 4x4 transforms:
+				/*const auto step = left.m_vertices.size() / stride / 4;
 
 				const float* l0 = left.m_vertices.data();
 				const float* l1 = left.m_vertices.data() + stride * step;
@@ -790,7 +830,7 @@ namespace bmf
 					return mat * transformMatrix;
 				});
 
-				return true;
+				return true;*/
 			});
 		}
 
@@ -818,11 +858,10 @@ namespace bmf
 			start[2] -= center.z;
 		}
 
-		// add translation matrix to instances
-		const auto mat = glm::translate(glm::mat4(1.0f), center);
+		// move instances
 		for(auto& i : m_instances)
 		{
-			i = i * mat;
+			i += center;
 		}
 	}
 
@@ -858,7 +897,7 @@ namespace bmf
 #pragma endregion
 #pragma region Ctor
 	BinaryMesh::BinaryMesh(uint32_t attributes, std::vector<float> vertices, std::vector<uint32_t> indices,
-		std::vector<Shape> shapes, std::vector<glm::mat4> instances)
+		std::vector<Shape> shapes, std::vector<InstanceData> instances)
 		:
 		m_vertices(move(vertices)),
 		m_indices(move(indices)),

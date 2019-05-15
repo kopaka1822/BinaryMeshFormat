@@ -41,6 +41,7 @@ namespace bmf
 			// bounding box for this shape
 			//BoundingBox bbox;
 		};
+		using InstanceData = glm::vec3;
 
 #pragma region Getter
 		/// \brief returns bitmask of all used attributes (see Attributes enum)
@@ -51,8 +52,8 @@ namespace bmf
 		const std::vector<uint32_t>& getIndices() const;
 		std::vector<Shape>& getShapes();
 		const std::vector<Shape>& getShapes() const;
-		std::vector<glm::mat4>& getInstanceTransforms();
-		const std::vector<glm::mat4>& getInstanceTransforms() const;
+		std::vector<InstanceData>& getInstanceTransforms();
+		const std::vector<InstanceData>& getInstanceTransforms() const;
 		/// \brief returns byte offset to the attribute
 		uint32_t getAttributeByteOffset(Attributes a) const;
 		/// \brief returns byte size of one vertex
@@ -85,7 +86,7 @@ namespace bmf
 #pragma endregion
 #pragma region Ctor
 		BinaryMesh(uint32_t attributes, std::vector<float> vertices, std::vector<uint32_t> indices,
-		           std::vector<Shape> shapes, std::vector<glm::mat4> instances);
+		           std::vector<Shape> shapes, std::vector<InstanceData> instances);
 		BinaryMesh() = default;
 		~BinaryMesh() = default;
 		BinaryMesh(const BinaryMesh&) = default;
@@ -115,11 +116,11 @@ namespace bmf
 		std::vector<float> m_vertices;
 		std::vector<uint32_t> m_indices;
 		std::vector<Shape> m_shapes;
-		std::vector<glm::mat4> m_instances;
+		std::vector<InstanceData> m_instances;
 		
 		uint32_t m_attributes = 0;
 
-		static constexpr uint32_t s_version = 2;
+		static constexpr uint32_t s_version = 3;
 	};
 
 }

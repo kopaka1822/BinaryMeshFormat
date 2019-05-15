@@ -18,10 +18,10 @@ TEST(TestSuite, Split)
 		1, 2, 3, // triangle 2 shape 1
 		1, 0, 2, // triangle 3 shape 2 (indices start by 0 again with offset 4)
 	};
-	const std::vector<glm::mat4> instances = {
-		glm::mat4(1.0f),
-		glm::mat4(2.0f),
-		glm::mat4(3.0f),
+	const std::vector<glm::vec3> instances = {
+		glm::vec3(1.0f),
+		glm::vec3(2.0f),
+		glm::vec3(3.0f),
 	};
 	const std::vector<BinaryMesh::Shape> shapes = {
 		BinaryMesh::Shape{0, 6, 0, 4, 0, 1, 2}, // shape 1
@@ -47,8 +47,8 @@ TEST(TestSuite, Split)
 	EXPECT_EQ(splitted[1].getShapes().size(), 1);
 
 	// check instances
-	EXPECT_EQ(splitted[0].getInstanceTransforms(), std::vector<glm::mat4>(instances.begin(), instances.begin() + shapes[0].instanceCount));
-	EXPECT_EQ(splitted[1].getInstanceTransforms(), std::vector<glm::mat4>(instances.begin() + shapes[1].instanceOffset, instances.end()));
+	EXPECT_EQ(splitted[0].getInstanceTransforms(), std::vector<glm::vec3>(instances.begin(), instances.begin() + shapes[0].instanceCount));
+	EXPECT_EQ(splitted[1].getInstanceTransforms(), std::vector<glm::vec3>(instances.begin() + shapes[1].instanceOffset, instances.end()));
 
 	// adjusted offset
 	EXPECT_EQ(splitted[1].getShapes()[0].indexOffset, 0);
@@ -76,9 +76,9 @@ TEST(TestSuite, Merge)
 	const std::vector<BinaryMesh::Shape> shapes1 = {
 		BinaryMesh::Shape{0, 6, 0, 4, 0, 2, 2}, // shape 1
 	};
-	const std::vector<glm::mat4> instances1 = {
-		glm::mat4(1.0f),
-		glm::mat4(2.0f),
+	const std::vector<glm::vec3> instances1 = {
+		glm::vec3(1.0f),
+		glm::vec3(2.0f),
 	};
 
 	const std::vector<float> vertices2 = {
@@ -92,8 +92,8 @@ TEST(TestSuite, Merge)
 	const std::vector<BinaryMesh::Shape> shapes2 = {
 		BinaryMesh::Shape{0, 3, 0, 3, 0, 1, 7}, // shape 1
 	};
-	const std::vector<glm::mat4> instances2 = {
-		glm::mat4(3.0f),
+	const std::vector<glm::vec3> instances2 = {
+		glm::vec3(3.0f),
 	};
 
 	std::vector<BinaryMesh> meshes;
