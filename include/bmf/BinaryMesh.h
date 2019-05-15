@@ -76,8 +76,12 @@ namespace bmf
 		                            const std::vector<std::unique_ptr<VertexGenerator>>& generators);
 		void removeDuplicateVertices();
 		void removeUnusedVertices();
-		// tries to merge shapes with the same vertex/index information
-		static void deinstanceShapes(std::vector<BinaryMesh>& meshes);
+		// tries to merge shapes with the same vertex/index information. epsilon: allowed squared vertex error
+		static void deinstanceShapes(std::vector<BinaryMesh>& meshes, float epsilon = 0.00001f);
+		// moves all shape vertices so that they are centered around the origin
+		void centerShapes();
+		static BoundingBox getBoundingBox(const float* start, const float* end, uint32_t attributes);
+		static BoundingBox getBoundingBox(const std::vector<float>& vertices, uint32_t attributes);
 #pragma endregion
 #pragma region Ctor
 		BinaryMesh(uint32_t attributes, std::vector<float> vertices, std::vector<uint32_t> indices,

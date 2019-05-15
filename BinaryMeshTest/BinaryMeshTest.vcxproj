@@ -49,6 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AttributesTest.cpp" />
+    <ClCompile Include="BinaryMeshCenterShapeTest.cpp" />
     <ClCompile Include="BinaryMeshFileIOTest.cpp" />
     <ClCompile Include="BinaryMeshGeneratingTest.cpp" />
     <ClCompile Include="BinaryMeshGroupingTest.cpp" />

@@ -699,7 +699,7 @@ namespace bmf
 		m_shapes[0].vertexCount = uint32_t(m_vertices.size() / stride);
 	}
 
-	void BinaryMesh::deinstanceShapes(std::vector<BinaryMesh>& meshes)
+	void BinaryMesh::deinstanceShapes(std::vector<BinaryMesh>& meshes, float epsilon)
 	{
 		for(const auto& m : meshes)
 			m.expectSingleShape("BinaryMesh::deinstanceShapes");
@@ -707,7 +707,7 @@ namespace bmf
 		auto end = meshes.end();
 		for(auto cur = meshes.begin(); cur != end; ++cur)
 		{
-			end = std::remove_if(cur + 1, end, [&left = *cur](const BinaryMesh& right)
+			end = std::remove_if(cur + 1, end, [&left = *cur, epsilon](const BinaryMesh& right)
 			{
 				// matching attributes?
 				if (left.getAttributes() != right.getAttributes()) return false;
@@ -779,7 +779,7 @@ namespace bmf
 					auto error = glm::dot(errVec, errVec); // squard error
 
 					// test if error is small enough
-					if (error > 0.0001f) return false;
+					if (error > epsilon) return false;
 				}
 
 				// this is an instance => transport instance information to left
@@ -798,6 +798,62 @@ namespace bmf
 		if (end == meshes.end()) return;
 		// erase meshes that became instances of another
 		meshes.erase(end, meshes.end());
+	}
+
+	void BinaryMesh::centerShapes()
+	{
+		expectSingleShape("BinaryMesh::centerShapes");
+
+		auto bbox = getBoundingBox(m_vertices, m_attributes);
+		
+		glm::vec3 center = { bbox.maxX + bbox.minX, bbox.maxY + bbox.minY, bbox.maxZ + bbox.minZ };
+		center /= 2.0f;
+
+		// move every vertex
+		const auto stride = getAttributeElementStride(m_attributes);
+		for(float* start = m_vertices.data(), *end = m_vertices.data() + m_vertices.size(); start < end; start += stride)
+		{
+			start[0] -= center.x;
+			start[1] -= center.y;
+			start[2] -= center.z;
+		}
+
+		// add translation matrix to instances
+		const auto mat = glm::translate(glm::mat4(1.0f), center);
+		for(auto& i : m_instances)
+		{
+			i = i * mat;
+		}
+	}
+
+	BoundingBox BinaryMesh::getBoundingBox(const float* start, const float* end,
+		uint32_t attributes)
+	{
+		if (!(attributes & Position))
+			throw std::runtime_error("positions are requird to calculate bounding box");
+
+		BoundingBox r;
+		r.minX = r.minY = r.minZ = std::numeric_limits<float>::max();
+		r.maxX = r.maxY = r.maxZ = -std::numeric_limits<float>::max();
+		const auto stride = getAttributeElementStride(attributes);
+
+		while (start < end)
+		{
+			r.minX = std::min(r.minX, start[0]);
+			r.minY = std::min(r.minY, start[1]);
+			r.minZ = std::min(r.minZ, start[2]);
+			r.maxX = std::max(r.maxX, start[0]);
+			r.maxY = std::max(r.maxY, start[1]);
+			r.maxZ = std::max(r.maxZ, start[2]);
+
+			start += stride;
+		}
+		return r;
+	}
+
+	BoundingBox BinaryMesh::getBoundingBox(const std::vector<float>& vertices, uint32_t attributes)
+	{
+		return getBoundingBox(vertices.data(), vertices.data() + vertices.size(), attributes);
 	}
 #pragma endregion
 #pragma region Ctor
