@@ -39,6 +39,16 @@ namespace bmf
 		return m_shapes;
 	}
 
+	BoundingBox& BinaryMesh::getBoundingBox()
+	{
+		return m_bbox;
+	}
+
+	const BoundingBox& BinaryMesh::getBoundingBox() const
+	{
+		return m_bbox;
+	}
+
 	/*std::vector<BinaryMesh::InstanceData>& BinaryMesh::getInstanceTransforms()
 	{
 		return m_instances;
@@ -87,6 +97,7 @@ namespace bmf
 		size_t curVertexOffset = 0;
 		size_t curInstanceOffset = 0;
 		size_t curShape = 0;
+		BoundingBox globalBbox = -BoundingBox::max();
 		try
 		{
 			for (auto& s : m_shapes)
@@ -128,6 +139,7 @@ namespace bmf
 				{
 					if (s.bbox != calcBoundingBox(s))
 						throw std::runtime_error("shape bounding box not correct");
+					globalBbox = globalBbox.unionWith(s.bbox);
 				}
 
 				// check instances for this shape
@@ -150,6 +162,13 @@ namespace bmf
 			throw std::runtime_error("no vertices");
 		if (m_indices.empty())
 			throw std::runtime_error("no indices");
+
+		// check global bbox
+		if (m_attributes & Position)
+		{
+			if (m_bbox != globalBbox)
+				throw std::runtime_error("global bounding box not correct");
+		}
 	}
 #pragma endregion
 #pragma region FileIO
@@ -173,6 +192,7 @@ namespace bmf
 		// create mesh with attributes
 		BinaryMesh m;
 		m.m_attributes = ui32;
+		m.m_bbox = read<BoundingBox>(f);
 
 		// read vertices
 		ui32 = read<uint32_t>(f); // num vertices
@@ -215,6 +235,7 @@ namespace bmf
 
 		// write attributes
 		write(f, m_attributes);
+		write(f, m_bbox);
 
 		// write vertices
 		write(f, uint32_t(m_vertices.size()));
@@ -284,6 +305,7 @@ namespace bmf
 			// starts immediately
 			dst.m_shapes[0].indexOffset = 0;
 			dst.m_shapes[0].vertexOffset = 0;
+			dst.m_bbox = src.bbox;
 			//dst.m_shapes[0].instanceOffset = 0;
 
 			// copy indices and determine number of vertices to copy
@@ -319,6 +341,7 @@ namespace bmf
 
 		BinaryMesh m;
 		m.m_attributes = meshes.front().m_attributes;
+		m.m_bbox = -BoundingBox::max();
 		const auto attributeCount = getAttributeElementStride(meshes.front().m_attributes);
 		size_t m_totalVertices = 0;
 		size_t m_totalIndices = 0;
@@ -360,11 +383,13 @@ namespace bmf
 			curVertex = std::copy(src.m_vertices.begin(), src.m_vertices.end(), curVertex);
 			curIndex = std::copy(src.m_indices.begin(), src.m_indices.end(), curIndex);
 			//curInstance = std::copy(src.m_instances.begin(), src.m_instances.end(), curInstance);
+			
 			curShape = std::transform(src.m_shapes.begin(), src.m_shapes.end(), curShape,
-				[indexOffset, vertexOffset/*, instanceOffset*/](Shape s)
+				[&](Shape s)
 			{
 				s.indexOffset += indexOffset;
 				s.vertexOffset += vertexOffset;
+				m.m_bbox = m.m_bbox.unionWith(s.bbox);
 				//s.instanceOffset += instanceOffset;
 				return s;
 			});
@@ -718,9 +743,11 @@ namespace bmf
 
 	void BinaryMesh::generateBoundingBoxes()
 	{
+		m_bbox = -BoundingBox::max();
 		for(auto& s : m_shapes)
 		{
 			s.bbox = calcBoundingBox(s);
+			m_bbox = m_bbox.unionWith(s.bbox);
 		}
 	}
 

@@ -52,6 +52,8 @@ namespace bmf
 		const std::vector<uint32_t>& getIndices() const;
 		std::vector<Shape>& getShapes();
 		const std::vector<Shape>& getShapes() const;
+		BoundingBox& getBoundingBox();
+		const BoundingBox& getBoundingBox() const;
 		//std::vector<InstanceData>& getInstanceTransforms();
 		//const std::vector<InstanceData>& getInstanceTransforms() const;
 		/// \brief returns byte offset to the attribute
@@ -119,11 +121,12 @@ namespace bmf
 		std::vector<float> m_vertices;
 		std::vector<uint32_t> m_indices;
 		std::vector<Shape> m_shapes;
+		BoundingBox m_bbox;
 		//std::vector<InstanceData> m_instances;
 		
 		uint32_t m_attributes = 0;
 
-		static constexpr uint32_t s_version = 4;
+		static constexpr uint32_t s_version = 5;
 	};
 
 }
