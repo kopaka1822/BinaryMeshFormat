@@ -1,53 +1,9 @@
 #include "../include/bmf/BinaryMesh.h"
-#include "../dependencies/eigen/Eigen/Dense"
+//#include "../dependencies/eigen/Eigen/Dense"
 
 namespace bmf
 {
 #pragma region Getter
-	uint32_t BinaryMesh::getAttributes() const
-	{
-		return m_attributes;
-	}
-
-	std::vector<float>& BinaryMesh::getVertices()
-	{
-		return m_vertices;
-	}
-
-	const std::vector<float>& BinaryMesh::getVertices() const
-	{
-		return m_vertices;
-	}
-
-	std::vector<uint32_t>& BinaryMesh::getIndices()
-	{
-		return m_indices;
-	}
-
-	const std::vector<uint32_t>& BinaryMesh::getIndices() const
-	{
-		return m_indices;
-	}
-
-	std::vector<BinaryMesh::Shape>& BinaryMesh::getShapes()
-	{
-		return m_shapes;
-	}
-
-	const std::vector<BinaryMesh::Shape>& BinaryMesh::getShapes() const
-	{
-		return m_shapes;
-	}
-
-	BoundingBox& BinaryMesh::getBoundingBox()
-	{
-		return m_bbox;
-	}
-
-	const BoundingBox& BinaryMesh::getBoundingBox() const
-	{
-		return m_bbox;
-	}
 
 	/*std::vector<BinaryMesh::InstanceData>& BinaryMesh::getInstanceTransforms()
 	{
@@ -59,23 +15,15 @@ namespace bmf
 		return m_instances;
 	}*/
 
-	uint32_t BinaryMesh::getAttributeByteOffset(Attributes a) const
-	{
-		return bmf::getAttributeByteOffset(m_attributes, a);
-	}
-
-	uint32_t BinaryMesh::getAttributeByteStride() const
-	{
-		return bmf::getAttributeByteOffset(m_attributes, Attributes::SIZE);
-	}
-
-	uint32_t BinaryMesh::getNumVertices() const
+	template<class IndexT>
+	uint32_t BinaryMesh<IndexT>::getNumVertices() const
 	{
 		const auto stride = getAttributeElementStride(m_attributes);
 		return uint32_t(m_vertices.size() / stride);
 	}
 
-	void BinaryMesh::verify() const
+	template<class IndexT>
+	void BinaryMesh<IndexT>::verify() const
 	{
 		// basic tests
 		if (m_attributes == 0)
@@ -122,7 +70,7 @@ namespace bmf
 					throw std::runtime_error("shape zero vertex count");
 
 				// check indices for this shape
-				uint32_t maxVertexIndex = 0;
+				IndexT maxVertexIndex = 0;
 				for (size_t i = s.indexOffset, end = s.indexOffset + s.indexCount; i != end; ++i)
 				{
 					maxVertexIndex = std::max(maxVertexIndex, m_indices[i]);
@@ -172,7 +120,8 @@ namespace bmf
 	}
 #pragma endregion
 #pragma region FileIO
-	BinaryMesh BinaryMesh::loadFromFile(const std::string& filename)
+	template<class IndexT>
+	BinaryMesh<IndexT> BinaryMesh<IndexT>::loadFromFile(const std::string& filename)
 	{
 		std::fstream f(filename, std::ios::in | std::ios::binary);
 
@@ -200,9 +149,12 @@ namespace bmf
 		m.m_vertices = read<float>(f, ui32);
 
 		// read indices
+		if (read<uint8_t>(f) != sizeof(IndexT))
+			throw std::runtime_error("index size mismatch. expected " + std::to_string(sizeof(IndexT)));
+
 		ui32 = read<uint32_t>(f); // num indices
 		// read index data
-		m.m_indices = read<uint32_t>(f, ui32);
+		m.m_indices = read<IndexT>(f, ui32);
 
 		// read shapes
 		ui32 = read<uint32_t>(f); // num shapes
@@ -223,7 +175,8 @@ namespace bmf
 		return m;
 	}
 
-	void BinaryMesh::saveToFile(const std::string& filename) const
+	template<class IndexT>
+	void BinaryMesh<IndexT>::saveToFile(const std::string& filename) const
 	{
 		std::fstream f(filename, std::ios::out | std::ios::binary);
 
@@ -242,6 +195,7 @@ namespace bmf
 		write(f, m_vertices);
 
 		// write indices
+		write(f, uint8_t(sizeof(IndexT)));
 		write(f, uint32_t(m_indices.size()));
 		write(f, m_indices);
 
@@ -258,28 +212,32 @@ namespace bmf
 		f.close();
 	}
 
+	template<class IndexT>
 	template <class T>
-	void BinaryMesh::write(std::fstream& stream, const T& value)
+	void BinaryMesh<IndexT>::write(std::fstream& stream, const T& value)
 	{
 		stream.write(reinterpret_cast<const char*>(&value), sizeof(T));
 	}
 
+	template<class IndexT>
 	template <class T>
-	void BinaryMesh::write(std::fstream& stream, const std::vector<T>& vector)
+	void BinaryMesh<IndexT>::write(std::fstream& stream, const std::vector<T>& vector)
 	{
 		stream.write(reinterpret_cast<const char*>(vector.data()), vector.size() * sizeof(T));
 	}
 
+	template<class IndexT>
 	template <class T>
-	T BinaryMesh::read(std::fstream& stream)
+	T BinaryMesh<IndexT>::read(std::fstream& stream)
 	{
 		T res;
 		stream.read(reinterpret_cast<char*>(&res), sizeof(T));
 		return res;
 	}
 
+	template<class IndexT>
 	template <class T>
-	std::vector<T> BinaryMesh::read(std::fstream& stream, size_t count)
+	std::vector<T> BinaryMesh<IndexT>::read(std::fstream& stream, size_t count)
 	{
 		std::vector<T> res;
 		res.resize(count);
@@ -288,7 +246,8 @@ namespace bmf
 	}
 #pragma endregion
 #pragma region Grouping
-	std::vector<BinaryMesh> BinaryMesh::splitShapes() const
+	template<class IndexT>
+	std::vector<BinaryMesh<IndexT>> BinaryMesh<IndexT>::splitShapes() const
 	{
 		std::vector<BinaryMesh> meshes;
 		meshes.resize(m_shapes.size());
@@ -335,7 +294,8 @@ namespace bmf
 		return meshes;
 	}
 
-	BinaryMesh BinaryMesh::mergeShapes(const std::vector<BinaryMesh>& meshes)
+	template<class IndexT>
+	BinaryMesh<IndexT> BinaryMesh<IndexT>::mergeShapes(const std::vector<BinaryMesh<IndexT>>& meshes)
 	{
 		if (meshes.empty()) return BinaryMesh();
 
@@ -399,7 +359,8 @@ namespace bmf
 	}
 #pragma endregion
 #pragma region Generation
-	void BinaryMesh::changeAttributes(uint32_t newAttributes,
+	template<class IndexT>
+	void BinaryMesh<IndexT>::changeAttributes(uint32_t newAttributes,
 		const std::vector<std::unique_ptr<VertexGenerator>>& generators)
 	{
 		while (newAttributes != m_attributes)
@@ -464,7 +425,8 @@ namespace bmf
 		}
 	}
 
-	void BinaryMesh::useVertexGenerator(const SingleVertexGenerator& svgen)
+	template<class IndexT>
+	void BinaryMesh<IndexT>::useVertexGenerator(const SingleVertexGenerator& svgen)
 	{
 		const auto newAttributes = svgen.getOutputAttribute(m_attributes);
 		const auto oldVertexStride = getAttributeElementStride(m_attributes);
@@ -488,7 +450,8 @@ namespace bmf
 		// indices and shapes remain
 	}
 
-	void BinaryMesh::useVertexGenerator(const MultiVertexGenerator& mvgen)
+	template<class IndexT>
+	void BinaryMesh<IndexT>::useVertexGenerator(const MultiVertexGenerator& mvgen)
 	{
 		expectSingleShape("BinaryMesh::useVertexGenerator");
 
@@ -499,9 +462,9 @@ namespace bmf
 
 		std::vector<float> newVertices;
 		newVertices.reserve(newVertexStride * vertexCount);
-		std::vector<uint32_t> newIndices(m_indices);
+		std::vector<IndexT> newIndices(m_indices);
 
-		std::vector<IndexTriangle> triangleIndices;
+		std::vector<std::array<IndexT*, 3>> triangleIndices;
 		std::vector<Triangle> triangles;
 		std::vector<ValueVertex> valueVertices;
 		std::vector<uint32_t>  outIndices;
@@ -537,9 +500,9 @@ namespace bmf
 				size_t off2 = (rot + 2) % 3;
 
 				auto& itri = triangleIndices.back();
-				itri.index[0] = &newIndices[idxIdx + off0];
-				itri.index[1] = &newIndices[idxIdx + off1];
-				itri.index[2] = &newIndices[idxIdx + off2];
+				itri[0] = &newIndices[idxIdx + off0];
+				itri[1] = &newIndices[idxIdx + off1];
+				itri[2] = &newIndices[idxIdx + off2];
 
 				// add triangle representation
 				triangles.emplace_back();
@@ -577,7 +540,7 @@ namespace bmf
 				// all indices must be the same (there is only one vertex)
 				for (size_t i = 0; i < triangleIndices.size(); ++i)
 				{
-					*triangleIndices[i].index[0] = startElementIdx;
+					*triangleIndices[i][0] = IndexT(startElementIdx);
 				}
 			}
 			else
@@ -587,7 +550,7 @@ namespace bmf
 				assert(triangles.size() == triangleIndices.size());
 				for (size_t i = 0; i < triangleIndices.size(); ++i)
 				{
-					*triangleIndices[i].index[0] = startElementIdx + outIndices[i];
+					*triangleIndices[i][0] = IndexT(startElementIdx + outIndices[i]);
 				}
 			}
 		}
@@ -600,7 +563,8 @@ namespace bmf
 		m_shapes[0].vertexCount = uint32_t(m_vertices.size() / newVertexStride);
 	}
 
-	BoundingBox BinaryMesh::calcBoundingBox(const Shape& s) const
+	template<class IndexT>
+	BoundingBox BinaryMesh<IndexT>::calcBoundingBox(const Shape& s) const
 	{
 		const auto stride = getAttributeElementStride(m_attributes);
 		return getBoundingBox(
@@ -610,7 +574,8 @@ namespace bmf
 		);
 	}
 
-	void BinaryMesh::removeDuplicateVertices()
+	template<class IndexT>
+	void BinaryMesh<IndexT>::removeDuplicateVertices()
 	{
 		expectSingleShape("BinaryMesh::removeDuplicateVertices");
 
@@ -686,7 +651,8 @@ namespace bmf
 		m_shapes[0].vertexCount = uint32_t(m_vertices.size() / stride);
 	}
 
-	void BinaryMesh::removeUnusedVertices()
+	template<class IndexT>
+	void BinaryMesh<IndexT>::removeUnusedVertices()
 	{
 		expectSingleShape("BinaryMesh::removeUnusedVertices");
 
@@ -741,7 +707,8 @@ namespace bmf
 		m_shapes[0].vertexCount = uint32_t(m_vertices.size() / stride);
 	}
 
-	void BinaryMesh::generateBoundingBoxes()
+	template<class IndexT>
+	void BinaryMesh<IndexT>::generateBoundingBoxes()
 	{
 		m_bbox = -BoundingBox::max();
 		for(auto& s : m_shapes)
@@ -917,7 +884,8 @@ namespace bmf
 		}
 	}*/
 
-	BoundingBox BinaryMesh::getBoundingBox(const float* start, const float* end,
+	template<class IndexT>
+	BoundingBox BinaryMesh<IndexT>::getBoundingBox(const float* start, const float* end,
 		uint32_t attributes)
 	{
 		if (!(attributes & Position))
@@ -941,14 +909,15 @@ namespace bmf
 		}
 		return r;
 	}
-
-	BoundingBox BinaryMesh::getBoundingBox(const std::vector<float>& vertices, uint32_t attributes)
+	template<class IndexT>
+	BoundingBox BinaryMesh<IndexT>::getBoundingBox(const std::vector<float>& vertices, uint32_t attributes)
 	{
 		return getBoundingBox(vertices.data(), vertices.data() + vertices.size(), attributes);
 	}
 #pragma endregion
 #pragma region Ctor
-	BinaryMesh::BinaryMesh(uint32_t attributes, std::vector<float> vertices, std::vector<uint32_t> indices,
+	template<class IndexT>
+	BinaryMesh<IndexT>::BinaryMesh(uint32_t attributes, std::vector<float> vertices, std::vector<IndexT> indices,
 		std::vector<Shape> shapes/*, std::vector<InstanceData> instances*/)
 		:
 		m_vertices(move(vertices)),
@@ -960,9 +929,13 @@ namespace bmf
 	}
 #pragma endregion
 
-	void BinaryMesh::expectSingleShape(const std::string& operation) const
+	template<class IndexT>
+	void BinaryMesh<IndexT>::expectSingleShape(const std::string& operation) const
 	{
 		if (m_shapes.size() != 1)
 			throw std::runtime_error(operation + " only works if a single shape is present in the mesh");
 	}
+
+	template class BinaryMesh<uint16_t>;
+	template class BinaryMesh<uint32_t>;
 }

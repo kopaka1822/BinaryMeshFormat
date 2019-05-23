@@ -12,8 +12,8 @@ TEST(TestSuite, ConterShape)
 	const std::vector<uint32_t> indices = {
 		0, 1, 2, // triangle 1
 	};
-	const std::vector<BinaryMesh::Shape> shapes = {
-		BinaryMesh::Shape{0, 3, 0, 3, 0, 1, 2}, // shape 1
+	const std::vector<Shape> shapes = {
+		Shape{0, 3, 0, 3, 0, 1, 2}, // shape 1
 	};
 	const std::vector<glm::vec3> instances = {
 		glm::vec3(0.0f),

@@ -14,8 +14,8 @@ TEST(TestSuite, InstanceMerge)
 		0, 1, 2, // triangle 1
 		1, 2, 3, // triangle 2
 	};
-	const std::vector<BinaryMesh::Shape> shapes1 = {
-		BinaryMesh::Shape{0, 6, 0, 4, 0, 1, 2}, // shape 1
+	const std::vector<Shape> shapes1 = {
+		Shape{0, 6, 0, 4, 0, 1, 2}, // shape 1
 	};
 	const std::vector<glm::vec3> instances1 = {
 		glm::vec3(0.0f),

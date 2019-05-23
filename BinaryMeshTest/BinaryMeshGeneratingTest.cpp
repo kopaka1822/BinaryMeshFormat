@@ -4,6 +4,8 @@
 
 TEST(TestSuite, GenerateRemove)
 {
+	using BinaryMesh = BinaryMesh32;
+
 	const std::vector<float> vertices = {
 		0.0f, 0.0f, 0.0f, 0.0f, 0.0f, // vertex 1
 		1.0f, 0.0f, 1.0f, 0.1f, 0.2f, // vertex 2
@@ -14,8 +16,8 @@ TEST(TestSuite, GenerateRemove)
 		0, 1, 2, // triangle 1
 		1, 2, 3, // triangle 2
 	};
-	const std::vector<BinaryMesh::Shape> shapes = {
-		BinaryMesh::Shape{0, 6, 0, 4, /*0, 1,*/ 2}, // shape
+	const std::vector<Shape> shapes = {
+		Shape{0, 6, 0, 4, /*0, 1,*/ 2}, // shape
 	};
 
 	BinaryMesh m1(Texcoord0 | Position, vertices, indices, shapes);//, getIdentityVec(1));
@@ -43,6 +45,8 @@ TEST(TestSuite, GenerateRemove)
 
 TEST(TestSuite, RemoveDuplicates)
 {
+	using BinaryMesh = BinaryMesh32;
+
 	const std::vector<float> vertices = {
 		0.0f, 1.0f, // vertex 0
 		1.0f, 0.0f, // vertex 1
@@ -53,8 +57,8 @@ TEST(TestSuite, RemoveDuplicates)
 		0, 1, 2, // triangle 1
 		1, 2, 3, // triangle 2
 	};
-	const std::vector<BinaryMesh::Shape> shapes = {
-		BinaryMesh::Shape{0, 6, 0,4, /*0, 1,*/ 2}, // shape
+	const std::vector<Shape> shapes = {
+		Shape{0, 6, 0,4, /*0, 1,*/ 2}, // shape
 	};
 
 	BinaryMesh m1(Texcoord0, vertices, indices, shapes);//, getIdentityVec(1));
@@ -70,7 +74,7 @@ TEST(TestSuite, RemoveDuplicates)
 		0, 1, 1, // triangle 1
 		1, 1, 0, // triangle 2
 	};
-	const BinaryMesh::Shape expectedShape = { 0, 6, 0, 2, /*0, 1,*/ 2 };
+	const Shape expectedShape = { 0, 6, 0, 2, /*0, 1,*/ 2 };
 
 	EXPECT_EQ(m1.getVertices(), expectedVertices);
 	EXPECT_EQ(m1.getIndices(), expectedIndices);
@@ -80,6 +84,8 @@ TEST(TestSuite, RemoveDuplicates)
 
 TEST(TestSuite, RemoveUnusedVertices)
 {
+	using BinaryMesh = BinaryMesh32;
+
 	const std::vector<float> vertices = {
 		0.0f, 1.0f, // vertex 0
 		2.0f, 3.0f, // vertex 1
@@ -93,8 +99,8 @@ TEST(TestSuite, RemoveUnusedVertices)
 		1, 0, 3, // triangle 2
 		1, 3, 5, // triangle 3
 	};
-	const std::vector<BinaryMesh::Shape> shapes = {
-		BinaryMesh::Shape{0, 9, 0, 6, /*0,1,*/2}, // shape
+	const std::vector<Shape> shapes = {
+		Shape{0, 9, 0, 6, /*0,1,*/2}, // shape
 	};
 
 	BinaryMesh m1(Texcoord0, vertices, indices, shapes);//, getIdentityVec(1));
@@ -116,7 +122,7 @@ TEST(TestSuite, RemoveUnusedVertices)
 		1, 0, 2, // triangle 2
 		1, 2, 3, // triangle 3
 	};
-	const BinaryMesh::Shape expectedShape = { 0, 9, 0, 4, /*0, 1,*/ 2 };
+	const Shape expectedShape = { 0, 9, 0, 4, /*0, 1,*/ 2 };
 
 	EXPECT_EQ(m1.getVertices(), expectedVertices);
 	EXPECT_EQ(m1.getIndices(), expectedIndices);

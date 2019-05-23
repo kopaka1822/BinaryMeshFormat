@@ -4,6 +4,8 @@
 
 TEST(TestSuite, Split)
 {
+	using BinaryMesh = BinaryMesh32;
+
 	const std::vector<float> vertices = {
 	0.0f, 0.0f, 0.0f, 0.0f, 0.0f, // vertex 0
 	1.0f, 0.0f, 1.0f, 0.1f, 0.2f, // vertex 1
@@ -23,9 +25,9 @@ TEST(TestSuite, Split)
 		glm::vec3(2.0f),
 		glm::vec3(3.0f),
 	};
-	const std::vector<BinaryMesh::Shape> shapes = {
-		BinaryMesh::Shape{0, 6, 0, 4,/* 0, 1,*/ 2}, // shape 1
-		BinaryMesh::Shape{6, 3, 4, 3, /*1, 2,*/ 7}, // shape 2
+	const std::vector<Shape> shapes = {
+		Shape{0, 6, 0, 4,/* 0, 1,*/ 2}, // shape 1
+		Shape{6, 3, 4, 3, /*1, 2,*/ 7}, // shape 2
 	};
 
 	BinaryMesh baseMesh(Texcoord0 | Position, vertices, indices, shapes);//, instances);
@@ -64,6 +66,8 @@ TEST(TestSuite, Split)
 
 TEST(TestSuite, Merge)
 {
+	using BinaryMesh = BinaryMesh32;
+
 	const std::vector<float> vertices1 = {
 		0.0f, 0.0f, 0.0f, 0.0f, 0.0f, // vertex 1
 		1.0f, 0.0f, 1.0f, 0.1f, 0.2f, // vertex 2
@@ -74,8 +78,8 @@ TEST(TestSuite, Merge)
 		0, 1, 2, // triangle 1
 		1, 2, 3, // triangle 2
 	};
-	const std::vector<BinaryMesh::Shape> shapes1 = {
-		BinaryMesh::Shape{0, 6, 0, 4, /*0, 2,*/ 2}, // shape 1
+	const std::vector<Shape> shapes1 = {
+		Shape{0, 6, 0, 4, /*0, 2,*/ 2}, // shape 1
 	};
 	const std::vector<glm::vec3> instances1 = {
 		glm::vec3(1.0f),
@@ -90,8 +94,8 @@ TEST(TestSuite, Merge)
 	const std::vector<uint32_t> indices2 = {
 		1, 0, 2, // triangle 1
 	};
-	const std::vector<BinaryMesh::Shape> shapes2 = {
-		BinaryMesh::Shape{0, 3, 0, 3, /*0, 1,*/ 7}, // shape 1
+	const std::vector<Shape> shapes2 = {
+		Shape{0, 3, 0, 3, /*0, 1,*/ 7}, // shape 1
 	};
 	const std::vector<glm::vec3> instances2 = {
 		glm::vec3(3.0f),
@@ -145,10 +149,11 @@ TEST(TestSuite, Merge)
 
 TEST(TestSuite, MergeError)
 {
+	using BinaryMesh = BinaryMesh32;
 	// incompatible attributes
 	std::vector<BinaryMesh> meshes;
-	meshes.emplace_back(Normal, std::vector<float>{}, std::vector<uint32_t>{}, std::vector<BinaryMesh::Shape>{});//, getIdentityVec(0));
-	meshes.emplace_back(Position, std::vector<float>{}, std::vector<uint32_t>{}, std::vector<BinaryMesh::Shape>{});// , getIdentityVec(0));
+	meshes.emplace_back(Normal, std::vector<float>{}, std::vector<uint32_t>{}, std::vector<Shape>{});//, getIdentityVec(0));
+	meshes.emplace_back(Position, std::vector<float>{}, std::vector<uint32_t>{}, std::vector<Shape>{});// , getIdentityVec(0));
 
 	EXPECT_THROW(BinaryMesh::mergeShapes(meshes), std::runtime_error);
 }

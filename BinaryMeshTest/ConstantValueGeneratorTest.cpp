@@ -5,6 +5,8 @@
 
 TEST(TestSuite, ConstantValue)
 {
+	using BinaryMesh = BinaryMesh32;
+
 	const std::vector<float> vertices = {
 		0.0f, 0.0f, 0.0f, // vertex 1
 		1.0f, 0.0f, 1.0f, // vertex 2
@@ -15,8 +17,8 @@ TEST(TestSuite, ConstantValue)
 	0, 1, 2, // triangle 1
 	1, 2, 3, // triangle 2
 	};
-	const std::vector<BinaryMesh::Shape> shapes = {
-		BinaryMesh::Shape{0, 6, 0, 4,/*0,1,*/ 2}, // shape
+	const std::vector<Shape> shapes = {
+		Shape{0, 6, 0, 4,/*0,1,*/ 2}, // shape
 	};
 
 	BinaryMesh m1(Position, vertices, indices, shapes);//, getIdentityVec(1));

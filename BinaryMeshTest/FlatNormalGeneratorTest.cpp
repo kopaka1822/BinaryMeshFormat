@@ -4,6 +4,8 @@
 
 TEST(TestSuite, FlatNormalsDifferentNormals) // two triangles with different normals
 {
+	using BinaryMesh = BinaryMesh32;
+
 	const std::vector<float> vertices = {
 		0.0f, 0.0f, 0.0f, // vertex 0
 		1.0f, 0.0f, 0.0f, // vertex 1
@@ -14,8 +16,8 @@ TEST(TestSuite, FlatNormalsDifferentNormals) // two triangles with different nor
 		0, 2, 1, // triangle 1 (laying on the ground with normal up)
 		3, 0, 1, // triangle 2 (standing and facing in positive z)
 	};
-	const std::vector<BinaryMesh::Shape> shapes = {
-		BinaryMesh::Shape{0, 6, 0, 4, /*0, 1,*/ 2}, // shape
+	const std::vector<Shape> shapes = {
+		Shape{0, 6, 0, 4, /*0, 1,*/ 2}, // shape
 	};
 
 	BinaryMesh m1(Position, vertices, indices, shapes);//, getIdentityVec(1));
@@ -51,6 +53,8 @@ TEST(TestSuite, FlatNormalsDifferentNormals) // two triangles with different nor
 
 TEST(TestSuite, FlatNormalsSameNormals) // two triangles with the same normals
 {
+	using BinaryMesh = BinaryMesh32;
+
 	const std::vector<float> vertices = {
 		0.0f, 0.0f, 0.0f, // vertex 0
 		1.0f, 0.0f, 0.0f, // vertex 1
@@ -61,8 +65,8 @@ TEST(TestSuite, FlatNormalsSameNormals) // two triangles with the same normals
 		0, 1, 2, // triangle 1 (laying on the ground with normal down)
 		0, 2, 3, // triangle 2 (laying on the ground with normal down)
 	};
-	const std::vector<BinaryMesh::Shape> shapes = {
-		BinaryMesh::Shape{0, 6, 0, 4, /*0, 1,*/ 2}, // shape
+	const std::vector<Shape> shapes = {
+		Shape{0, 6, 0, 4, /*0, 1,*/ 2}, // shape
 	};
 
 	BinaryMesh m1(Position, vertices, indices, shapes);// , getIdentityVec(1));
