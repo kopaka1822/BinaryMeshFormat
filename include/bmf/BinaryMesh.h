@@ -86,6 +86,9 @@ namespace bmf
 		void generateBoundingBoxes();
 		static BoundingBox getBoundingBox(const float* start, const float* end, uint32_t attributes);
 		static BoundingBox getBoundingBox(const std::vector<float>& vertices, uint32_t attributes);
+		// converts mesh to a mesh with 16 bit indices (moves all data to the other mesh)
+		// it is recommended to call removeUnusedVertices() before calling this method.
+		std::vector<BinaryMesh<uint16_t>> force16BitIndices();
 #pragma endregion
 #pragma region Ctor
 		BinaryMesh(uint32_t attributes, std::vector<float> vertices, std::vector<IndexT> indices,

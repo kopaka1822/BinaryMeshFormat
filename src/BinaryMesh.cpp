@@ -68,6 +68,8 @@ namespace bmf
 				//	throw std::runtime_error("shape zero instances count");
 				if (s.vertexCount == 0)
 					throw std::runtime_error("shape zero vertex count");
+				if (s.vertexCount > std::numeric_limits<IndexT>::max())
+					throw std::runtime_error("shape vertex count bigger than index range");
 
 				// check indices for this shape
 				IndexT maxVertexIndex = 0;
@@ -913,6 +915,80 @@ namespace bmf
 	BoundingBox BinaryMesh<IndexT>::getBoundingBox(const std::vector<float>& vertices, uint32_t attributes)
 	{
 		return getBoundingBox(vertices.data(), vertices.data() + vertices.size(), attributes);
+	}
+
+	template <class IndexT>
+	std::vector<BinaryMesh<uint16_t>> BinaryMesh<IndexT>::force16BitIndices()
+	{
+		expectSingleShape("BinaryMesh::force16BitIndices");
+
+		std::vector<BinaryMesh16> res;
+		res.reserve(8);
+
+
+		const auto stride = getAttributeElementStride(m_attributes);
+		using Triangle = std::array<IndexT, 3>;
+		auto maxIndex = IndexT(std::numeric_limits<uint16_t>::max());
+
+		do
+		{
+			// if the number of vertices is small enough we can take the mesh as is
+			if (m_vertices.size() <= std::numeric_limits<uint16_t>::max())
+			{
+				res.emplace_back(m_attributes, std::move(m_vertices),
+					std::vector<uint16_t>(m_indices.begin(), m_indices.end()), std::move(m_shapes));
+				
+				if (res.size() > 1) // if this wasn't the only shape, the bounding box was invalidated
+					res.back().generateBoundingBoxes();
+				break;
+			}
+
+			const auto start = reinterpret_cast<Triangle*>(m_indices.data());
+			assert(m_indices.size() % 3 == 0);
+			const auto end = start + m_indices.size() / 3;
+			IndexT maxVertex = 0;
+
+			// partition
+			// only use triangles with a lower index than max index
+			const auto split = std::partition(start, end, [maxIndex, &maxVertex](const Triangle& tri)
+			{
+				auto max = std::max({tri[0], tri[1], tri[2]});
+				if (max >= maxIndex)
+					return false;
+				
+				maxVertex = std::max(maxVertex, max);
+				return true;
+			});
+			// data for new partition
+			const auto numTriangles = split - start;
+			const auto numIndices = numTriangles * 3;
+
+			// those remain unchanged 
+			std::vector<uint16_t> newIndices;
+			newIndices.assign(m_indices.begin(), m_indices.begin() + numIndices);
+			std::vector<float> newVertices;
+			newVertices.assign(m_vertices.begin(), m_vertices.begin() + size_t(maxVertex + 1) * stride);
+
+			// add shape with only 16 bit indices
+			res.emplace_back(m_attributes, std::move(newVertices), std::move(newIndices), 
+			                 std::vector<Shape>{ Shape{
+				                 0, uint32_t(newIndices.size()), 
+				                 0, uint32_t(maxVertex + 1),
+				                 m_shapes[0].materialId, -BoundingBox::max()
+			                 }});
+			// unused vertices could be created by splitting
+			res.back().removeUnusedVertices();
+			res.back().generateBoundingBoxes();
+
+			// adjust this shape so it contains only the new vertices
+			m_indices.erase(m_indices.begin(), m_indices.begin() + numIndices);
+			m_shapes[0].indexCount = uint32_t(m_indices.size());
+
+			// remove all vertices that are no longer references
+			removeUnusedVertices();
+		} while (!m_vertices.empty());
+
+		return res;
 	}
 #pragma endregion
 #pragma region Ctor

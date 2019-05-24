@@ -129,3 +129,51 @@ TEST(TestSuite, RemoveUnusedVertices)
 	EXPECT_EQ(memcmp(m1.getShapes().data(), &expectedShape, sizeof(expectedShape)), 0);
 	EXPECT_NO_THROW(m1.verify());
 }
+
+TEST(TestSuite, Force16Bit)
+{
+	using BinaryMesh = BinaryMesh32;
+
+	std::vector<float> vertices;
+	const std::vector<uint32_t> indices = {
+		0, 1, 3, // 1st partition
+		70000, 0, 70001, // mixed => 2nd partition
+		70000, 70001, 70002, // 2nd partition
+	};
+	vertices.assign(70003 * 3, -1.0f);
+	// write special values to the used vertices
+	vertices[0] = 0.0f;
+	vertices[3 * 1] = 1.0f;
+	vertices[3 * 3] = 2.0f;
+	vertices[3 * 70000] = 3.0f;
+	vertices[3 * 70001] = 4.0f;
+	vertices[3 * 70002] = 5.0f;
+
+	const std::vector<Shape> shapes = {
+		Shape{0, 9, 0, 70003, /*0,1,*/2}, // shape
+	};
+
+	BinaryMesh m1(Position, vertices, indices, shapes);//, getIdentityVec(1));
+	m1.generateBoundingBoxes();
+
+	EXPECT_NO_THROW(m1.verify());
+	
+	auto res = m1.force16BitIndices();
+	EXPECT_EQ(res.size(), 2);
+
+	for (auto& r : res)
+		EXPECT_NO_THROW(r.verify());
+
+	// test index counts
+	EXPECT_EQ(res[0].getIndices().size(), 3);
+	EXPECT_EQ(res[1].getIndices().size(), 6);
+	// test vertices
+	EXPECT_EQ(res[0].getVertices()[0], vertices[0]);
+	EXPECT_EQ(res[0].getVertices()[3 * 1], vertices[3 * 1]);
+	EXPECT_EQ(res[0].getVertices()[3 * 2], vertices[3 * 3]);
+
+	EXPECT_EQ(res[1].getVertices()[0], vertices[0]);
+	EXPECT_EQ(res[1].getVertices()[3 * 1], vertices[3 * 70000]);
+	// test indices
+	EXPECT_EQ(res[1].getIndices()[0], 1);
+}
