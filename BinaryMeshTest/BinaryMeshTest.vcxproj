@@ -52,6 +52,7 @@
     <ClCompile Include="BinaryMeshCenterShapeTest.cpp" />
     <ClCompile Include="BinaryMeshFileIOTest.cpp" />
     <ClCompile Include="BinaryMeshGeneratingTest.cpp" />
+    <ClCompile Include="BinaryMeshGetterTest.cpp" />
     <ClCompile Include="BinaryMeshGroupingTest.cpp" />
     <ClCompile Include="ConstantValueGeneratorTest.cpp" />
     <ClCompile Include="DeinstanceTest.cpp" />

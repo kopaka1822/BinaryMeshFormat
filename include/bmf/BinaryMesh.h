@@ -64,6 +64,16 @@ namespace bmf
 		/// and no index that goes beyond the buffer.
 		/// \throw std::runtime error if something is wrong
 		void verify() const;
+
+		// helper for dxr structures
+
+		/// \brief adds the corresponding vertexOffset to each index.
+		// therefore, vertex offset should always be 0 if this index buffer is used
+		std::vector<uint32_t> getSummedIndices() const;
+
+		/// \brief returns an array with  the size of numIndices() / 3.
+		/// and holds the shape material id per triangle
+		std::vector<uint32_t> getMaterialIdPerTriangle() const;
 #pragma endregion
 #pragma region FileIO
 		static BinaryMesh loadFromFile(const std::string& filename);

@@ -15,6 +15,41 @@ namespace bmf
 		return m_instances;
 	}*/
 
+	template <class IndexT>
+	std::vector<uint32_t> BinaryMesh<IndexT>::getSummedIndices() const
+	{
+		std::vector<uint32_t> res;
+		res.resize(m_indices.size());
+
+		auto it = res.begin();
+		for(const auto& s : m_shapes)
+		{
+			for(uint32_t i = s.indexOffset, end = s.indexOffset + s.indexCount; i != end; ++i)
+			{
+				res[i] = m_indices[i] + s.vertexOffset;
+			}
+		}
+
+		return res;
+	}
+
+	template <class IndexT>
+	std::vector<uint32_t> BinaryMesh<IndexT>::getMaterialIdPerTriangle() const
+	{
+		std::vector<uint32_t> res;
+		res.resize(m_indices.size() / 3);
+
+		auto it = res.begin();
+		for(const auto& s : m_shapes)
+		{
+			it = std::fill_n(it, s.indexCount / 3, s.materialId);
+		}
+
+		assert(it == res.end());
+
+		return res;
+	}
+
 	template<class IndexT>
 	uint32_t BinaryMesh<IndexT>::getNumVertices() const
 	{
