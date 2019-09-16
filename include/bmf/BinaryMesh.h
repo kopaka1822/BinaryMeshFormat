@@ -18,6 +18,80 @@
 
 namespace bmf
 {
+	class BinaryMesh
+	{
+	public:
+		
+		//using InstanceData = glm::vec3;
+
+#pragma region Getter
+		/// \brief returns bitmask of all used attributes (see Attributes enum)
+		uint32_t getAttributes() const { return m_attributes; }
+		std::vector<float>& getVertices() { return m_vertices; }
+		const std::vector<float>& getVertices() const { return m_vertices; }
+		BoundingBox& getBoundingBox() { return m_bbox; }
+		const BoundingBox& getBoundingBox() const { return m_bbox; }
+		//std::vector<InstanceData>& getInstanceTransforms();
+		//const std::vector<InstanceData>& getInstanceTransforms() const;
+		uint32_t getNumVertices() const;
+		/// \brief checks if the mesh has a valid amount of indices/vertices
+		/// and no index that goes beyond the buffer.
+		/// \throw std::runtime error if something is wrong
+		virtual void verify() const;
+#pragma endregion
+#pragma region FileIO
+		void loadFromFile(const std::string& filename);
+		void saveToFile(const std::string& filename) const;
+#pragma endregion
+#pragma region Generating
+		void changeAttributes(uint32_t newAttributes,
+		                            const std::vector<std::unique_ptr<VertexGenerator>>& generators);
+#pragma endregion
+#pragma region Ctor
+		BinaryMesh(uint32_t attributes, std::vector<float> vertices);
+		BinaryMesh() = default;
+		virtual ~BinaryMesh() = default;
+		BinaryMesh(const BinaryMesh&) = default;
+		BinaryMesh& operator=(const BinaryMesh&) = default;
+		BinaryMesh(BinaryMesh&&) noexcept = default;
+		BinaryMesh& operator=(BinaryMesh&&) noexcept = default;
+#pragma endregion
+	protected:
+#pragma region Generating
+		// generator helpers
+		void useVertexGenerator(const SingleVertexGenerator& svgen);
+		virtual void useMultiVertexGenerator(const MultiVertexGenerator& mvgen);
+		// generate bounding boxes based on vertex positions and width, height, depth attributes if available
+		virtual void generateBoundingBoxes();
+
+		static BoundingBox getBoundingBox(const float* start, const float* end, uint32_t attributes);
+		static BoundingBox getBoundingBox(const std::vector<float>& vertices, uint32_t attributes);
+#pragma endregion 
+#pragma region FileIO
+		// fstream helpers
+		template<class T>
+		static void write(std::fstream& stream, const T& value);
+		template<class T>
+		static void write(std::fstream& stream, const std::vector<T>& vector);
+		template<class T>
+		static T read(std::fstream& stream);
+		template<class T>
+		static std::vector<T> read(std::fstream& stream, size_t count);
+
+		// virtual functions for derived class
+		virtual std::string getFileSignature() const;
+		virtual void writeExtendedData(std::fstream& stream) const {}
+		virtual void readExtendedData(std::fstream& stream) {}
+#pragma endregion 
+		virtual void verifyBoundingBox() const;
+
+		std::vector<float> m_vertices;
+		BoundingBox m_bbox;		
+		uint32_t m_attributes = 0;
+
+		static constexpr uint32_t s_version = 7;
+	};
+
 	struct Shape
 	{
 		// offset for the first index in the index buffer
@@ -40,30 +114,15 @@ namespace bmf
 	};
 
 	template<class IndexT>
-	class BinaryMesh
+	class ShapeBinaryMesh final : public BinaryMesh
 	{
 	public:
-		
-		//using InstanceData = glm::vec3;
 
-#pragma region Getter
-		/// \brief returns bitmask of all used attributes (see Attributes enum)
-		uint32_t getAttributes() const { return m_attributes; }
-		std::vector<float>& getVertices() { return m_vertices; }
-		const std::vector<float>& getVertices() const { return m_vertices; }
+#pragma region GETTER
 		std::vector<IndexT>& getIndices() { return m_indices; }
 		const std::vector<IndexT>& getIndices() const { return m_indices; }
 		std::vector<Shape>& getShapes() { return m_shapes; }
 		const std::vector<Shape>& getShapes() const { return m_shapes; }
-		BoundingBox& getBoundingBox() { return m_bbox; }
-		const BoundingBox& getBoundingBox() const { return m_bbox; }
-		//std::vector<InstanceData>& getInstanceTransforms();
-		//const std::vector<InstanceData>& getInstanceTransforms() const;
-		uint32_t getNumVertices() const;
-		/// \brief checks if the mesh has a valid amount of indices/vertices
-		/// and no index that goes beyond the buffer.
-		/// \throw std::runtime error if something is wrong
-		void verify() const;
 
 		// helper for dxr structures
 
@@ -74,18 +133,13 @@ namespace bmf
 		/// \brief returns an array with  the size of numIndices() / 3.
 		/// and holds the shape material id per triangle
 		std::vector<uint32_t> getMaterialIdPerTriangle() const;
-#pragma endregion
-#pragma region FileIO
-		static BinaryMesh loadFromFile(const std::string& filename);
-		void saveToFile(const std::string& filename) const;
-#pragma endregion
+		virtual void verify() const override;
+#pragma endregion 
 #pragma region Grouping
-		std::vector<BinaryMesh> splitShapes() const;
-		static BinaryMesh mergeShapes(const std::vector<BinaryMesh>& meshes);
+		std::vector<ShapeBinaryMesh<IndexT>> splitShapes() const;
+		static ShapeBinaryMesh<IndexT> mergeShapes(const std::vector<ShapeBinaryMesh<IndexT>>& meshes);
 #pragma endregion
 #pragma region Generating
-		void changeAttributes(uint32_t newAttributes,
-		                            const std::vector<std::unique_ptr<VertexGenerator>>& generators);
 		void removeDuplicateVertices();
 		void removeUnusedVertices();
 		// tries to merge shapes with the same vertex/index information. epsilon: allowed squared vertex error
@@ -93,55 +147,45 @@ namespace bmf
 		// moves all shape vertices so that they are centered around the origin
 		//void centerShapes();
 		// generates bounding boxes for all shapes
-		void generateBoundingBoxes();
-		static BoundingBox getBoundingBox(const float* start, const float* end, uint32_t attributes);
-		static BoundingBox getBoundingBox(const std::vector<float>& vertices, uint32_t attributes);
+		virtual void generateBoundingBoxes() override;
+
 		// converts mesh to a mesh with 16 bit indices (moves all data to the other mesh)
 		// it is recommended to call removeUnusedVertices() before calling this method.
-		std::vector<BinaryMesh<uint16_t>> force16BitIndices();
+		std::vector<ShapeBinaryMesh<uint16_t>> force16BitIndices();
 #pragma endregion
 #pragma region Ctor
-		BinaryMesh(uint32_t attributes, std::vector<float> vertices, std::vector<IndexT> indices,
-		           std::vector<Shape> shapes/*, std::vector<InstanceData> instances*/);
-		BinaryMesh() = default;
-		~BinaryMesh() = default;
-		BinaryMesh(const BinaryMesh&) = default;
-		BinaryMesh& operator=(const BinaryMesh&) = default;
-		BinaryMesh(BinaryMesh&&) noexcept = default;
-		BinaryMesh& operator=(BinaryMesh&&) noexcept = default;
-#pragma endregion
+		ShapeBinaryMesh(uint32_t attributes, std::vector<float> vertices, std::vector<IndexT> indices,
+			std::vector<Shape> shapes/*, std::vector<InstanceData> instances*/);
+		ShapeBinaryMesh() = default;
+		~ShapeBinaryMesh() = default;
+		ShapeBinaryMesh(const ShapeBinaryMesh&) = default;
+		ShapeBinaryMesh& operator=(const ShapeBinaryMesh&) = default;
+		ShapeBinaryMesh(ShapeBinaryMesh&&) noexcept = default;
+		ShapeBinaryMesh& operator=(ShapeBinaryMesh&&) noexcept = default;
+#pragma endregion 
 	private:
 #pragma region Generating
 		// generator helpers
-		void useVertexGenerator(const SingleVertexGenerator& svgen);
-		void useVertexGenerator(const MultiVertexGenerator& mvgen);
+		void useMultiVertexGenerator(const MultiVertexGenerator& mvgen) override;
 		BoundingBox calcBoundingBox(const Shape& s) const;
 #pragma endregion 
 #pragma region FileIO
-		// fstream helpers
-		template<class T>
-		static void write(std::fstream& stream, const T& value);
-		template<class T>
-		static void write(std::fstream& stream, const std::vector<T>& vector);
-		template<class T>
-		static T read(std::fstream& stream);
-		template<class T>
-		static std::vector<T> read(std::fstream& stream, size_t count);
+		// virtual functions for derived class
+		virtual std::string getFileSignature() const override;
+		virtual void writeExtendedData(std::fstream& stream) const override;
+		virtual void readExtendedData(std::fstream& stream) override;
 #pragma endregion 
+
+		virtual void verifyBoundingBox() const override;
 		void expectSingleShape(const std::string& operation) const;
 
-		std::vector<float> m_vertices;
 		std::vector<IndexT> m_indices;
 		std::vector<Shape> m_shapes;
-		BoundingBox m_bbox;
-		//std::vector<InstanceData> m_instances;
-		
-		uint32_t m_attributes = 0;
 
-		static constexpr uint32_t s_version = 6;
+		//std::vector<InstanceData> m_instances;
 	};
 
-	using BinaryMesh16 = BinaryMesh<uint16_t>;
-	using BinaryMesh32 = BinaryMesh<uint32_t>;
+	using BinaryMesh16 = ShapeBinaryMesh<uint16_t>;
+	using BinaryMesh32 = ShapeBinaryMesh<uint32_t>;
 
 }

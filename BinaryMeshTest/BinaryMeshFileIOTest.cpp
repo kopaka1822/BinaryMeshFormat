@@ -26,7 +26,8 @@ TEST(TestSuite, LoadSave)
 
 	m1.saveToFile("LoadSaveTest.bmf");
 
-	auto m2 = BinaryMesh::loadFromFile("LoadSaveTest.bmf");
+	BinaryMesh m2;
+	m2.loadFromFile("LoadSaveTest.bmf");
 
 	EXPECT_EQ(m1.getAttributes(), m2.getAttributes());
 	EXPECT_EQ(m1.getVertices(), m2.getVertices());
