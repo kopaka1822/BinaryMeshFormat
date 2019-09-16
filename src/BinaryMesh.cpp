@@ -79,7 +79,7 @@ namespace bmf
 					throw std::runtime_error("shape index offset out of range");
 				if (s.indexCount % 3 != 0)
 					throw std::runtime_error("shape index count is not a multiple of 3");
-				if (s.indexOffset + s.indexCount > numIndices)
+				if (size_t(s.indexOffset + s.indexCount) > numIndices)
 					throw std::runtime_error("shape index count out of range");
 				if (s.indexCount == 0)
 					throw std::runtime_error("shape zero index count");
@@ -175,7 +175,8 @@ namespace bmf
 
 	void BinaryMesh::verifyBoundingBox() const
 	{
-		// TODO
+		if (m_bbox != getBillboardBoundingBox(m_vertices, m_attributes))
+			throw std::runtime_error("bbox does not match computed billboard bounding box");
 	}
 #pragma endregion
 #pragma region FileIO
@@ -534,42 +535,50 @@ namespace bmf
 		throw std::runtime_error("BinaryMesh::changeAttributes MultiVertexGenerator can only be used with ShapedMesh meshes");
 	}
 
-	void BinaryMesh::generateBoundingBoxes()
+	BoundingBox BinaryMesh::getBillboardBoundingBox(const std::vector<float>& vertices, uint32_t attributes)
 	{
-		if (!(m_attributes & Position))
+		if (!(attributes & Position))
 			throw std::runtime_error("positions are required to calculate bounding box");
 
 		// convert all vertices
-		const auto stride = getAttributeElementStride(m_attributes);
-		const auto vertexCount = m_vertices.size() / stride;
+		const auto stride = getAttributeElementStride(attributes);
+		const auto vertexCount = vertices.size() / stride;
 
-		const bool hasWidth = m_attributes & Width;
-		const bool hasHeight = m_attributes & Height;
-		const bool hasDepth = m_attributes & Depth;
+		const bool hasWidth = attributes & Width;
+		const size_t widthOffset = getAttributeElementOffset(attributes, Width);
+		const bool hasHeight = attributes & Height;
+		const size_t heightOffet = getAttributeElementOffset(attributes, Height);
+		const bool hasDepth = attributes & Depth;
+		const size_t depthOffset = getAttributeElementOffset(attributes, Depth);
 
-		m_bbox = -BoundingBox::max();
+		auto bbox = -BoundingBox::max();
 		for (size_t i = 0; i < vertexCount; ++i)
 		{
-			float* pos = &m_vertices[i * stride];
-
-			RefVertex src(m_attributes, pos);
+			const float* pos = &vertices[i * stride];
 
 			// add radius for billboards
 			float radius = 0.0f;
 			if (hasWidth)
-				radius = std::max(*src.get(Width), radius);
+				radius = std::max(*(pos + widthOffset), radius);
 			if (hasHeight)
-				radius = std::max(*src.get(Height), radius);
+				radius = std::max(*(pos + heightOffet), radius);
 			if (hasDepth)
-				radius = std::max(*src.get(Depth), radius);
+				radius = std::max(*(pos + depthOffset), radius);
 
-			m_bbox.minX = std::min(m_bbox.minX, pos[0] - radius);
-			m_bbox.minY = std::min(m_bbox.minY, pos[1] - radius);
-			m_bbox.minZ = std::min(m_bbox.minZ, pos[2] - radius);
-			m_bbox.maxX = std::max(m_bbox.maxX, pos[0] + radius);
-			m_bbox.maxY = std::max(m_bbox.maxY, pos[1] + radius);
-			m_bbox.maxZ = std::max(m_bbox.maxZ, pos[2] + radius);
+			bbox.minX = std::min(bbox.minX, pos[0] - radius);
+			bbox.minY = std::min(bbox.minY, pos[1] - radius);
+			bbox.minZ = std::min(bbox.minZ, pos[2] - radius);
+			bbox.maxX = std::max(bbox.maxX, pos[0] + radius);
+			bbox.maxY = std::max(bbox.maxY, pos[1] + radius);
+			bbox.maxZ = std::max(bbox.maxZ, pos[2] + radius);
 		}
+
+		return bbox;
+	}
+
+	void BinaryMesh::generateBoundingBoxes()
+	{
+		m_bbox = getBillboardBoundingBox(m_vertices, m_attributes);
 	}
 
 	template<class IndexT>

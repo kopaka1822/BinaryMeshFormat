@@ -177,3 +177,20 @@ TEST(TestSuite, Force16Bit)
 	// test indices
 	EXPECT_EQ(res[1].getIndices()[0], 1);
 }
+
+TEST(TestSuite, BillboardBoundingBox)
+{
+
+	std::vector<float> vertices = {
+		0.0f, 0.0f, 0.0f, 1.0f, 2.0f, // billboard 1
+		1.0f, 1.0f, 1.0f, 1.5f, 1.5f, // billboard 2
+	};
+
+	BinaryMesh m1(Position | Width | Height, vertices);//, getIdentityVec(1));
+	m1.generateBoundingBoxes();
+
+	EXPECT_NO_THROW(m1.verify());
+
+	EXPECT_EQ(m1.getBoundingBox().minX, -2.0f);
+	EXPECT_EQ(m1.getBoundingBox().maxX, 2.5f);
+}

@@ -17,6 +17,7 @@ namespace bmf
 		Width = 1 << 9,     // float
 		Height = 1 << 10,   // float
 		Depth = 1 << 11,    // float
+		Material = 1 << 12, // int
 		SIZE // reserved
 	};
 
@@ -37,6 +38,7 @@ namespace bmf
 		case Width:		return 1;
 		case Height:    return 1;
 		case Depth:     return 1;
+		case Material:	return 1;
 		default: return 0;
 		}
 	}
@@ -76,5 +78,16 @@ namespace bmf
 	constexpr uint32_t getAttributeByteStride(uint32_t attributes) noexcept
 	{
 		return getAttributeElementStride(attributes) * sizeof(float);
+	}
+
+	/// reinterpret float as integer
+	inline uint32_t asInt(float value)
+	{
+		return *reinterpret_cast<uint32_t*>(&value);
+	}
+
+	inline float asFloat(uint32_t value)
+	{
+		return *reinterpret_cast<float*>(&value);
 	}
 }

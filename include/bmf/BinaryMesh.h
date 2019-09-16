@@ -46,6 +46,8 @@ namespace bmf
 #pragma region Generating
 		void changeAttributes(uint32_t newAttributes,
 		                            const std::vector<std::unique_ptr<VertexGenerator>>& generators);
+		// generate bounding boxes based on vertex positions and width, height, depth attributes if available
+		virtual void generateBoundingBoxes();
 #pragma endregion
 #pragma region Ctor
 		BinaryMesh(uint32_t attributes, std::vector<float> vertices);
@@ -61,9 +63,7 @@ namespace bmf
 		// generator helpers
 		void useVertexGenerator(const SingleVertexGenerator& svgen);
 		virtual void useMultiVertexGenerator(const MultiVertexGenerator& mvgen);
-		// generate bounding boxes based on vertex positions and width, height, depth attributes if available
-		virtual void generateBoundingBoxes();
-
+		static BoundingBox getBillboardBoundingBox(const std::vector<float>& vertices, uint32_t attributes);
 		static BoundingBox getBoundingBox(const float* start, const float* end, uint32_t attributes);
 		static BoundingBox getBoundingBox(const std::vector<float>& vertices, uint32_t attributes);
 #pragma endregion 
