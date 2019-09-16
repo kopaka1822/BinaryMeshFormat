@@ -14,6 +14,9 @@ namespace bmf
 		Texcoord1 = 1 << 6,	// float2
 		Texcoord2 = 1 << 7,	// float2
 		Texcoord3 = 1 << 8, // float2
+		Width = 1 << 9,     // float
+		Height = 1 << 10,   // float
+		Depth = 1 << 11,    // float
 		SIZE // reserved
 	};
 
@@ -31,6 +34,9 @@ namespace bmf
 		case Texcoord1: return 2;
 		case Texcoord2: return 2;
 		case Texcoord3: return 2;
+		case Width:		return 1;
+		case Height:    return 1;
+		case Depth:     return 1;
 		default: return 0;
 		}
 	}
