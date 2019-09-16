@@ -38,6 +38,9 @@ namespace bmf
 		/// and no index that goes beyond the buffer.
 		/// \throw std::runtime error if something is wrong
 		virtual void verify() const;
+
+		/// \brief extracts only the material information from each vertex and puts it into a buffer
+		std::vector<uint32_t> getMaterialAttribBuffer() const;
 #pragma endregion
 #pragma region FileIO
 		void loadFromFile(const std::string& filename);

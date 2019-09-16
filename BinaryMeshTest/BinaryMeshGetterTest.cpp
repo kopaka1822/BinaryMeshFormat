@@ -63,3 +63,21 @@ TEST(TestSuite, MaterialPerTriangle)
 	std::vector<uint32_t> expected{ 1, 1, 2 };
 	EXPECT_EQ(mids, expected);
 }
+
+TEST(TestSuite, MaterialAttribBuffer)
+{
+	const std::vector<float> vertices = {
+		0.0f, 0.0f, 0.0f, asFloat(1),
+		0.0f, 0.0f, 0.0f, asFloat(2),
+		0.0f, 0.0f, 0.0f, asFloat(5),
+	};
+
+	BinaryMesh m(Position | Material, vertices);
+	m.generateBoundingBoxes();
+
+	EXPECT_NO_THROW(m.verify());
+
+	auto mids = m.getMaterialAttribBuffer();
+	std::vector<uint32_t> expected{ 1, 2, 5 };
+	EXPECT_EQ(mids, expected);
+}

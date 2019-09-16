@@ -173,6 +173,24 @@ namespace bmf
 		verifyBoundingBox();
 	}
 
+	std::vector<uint32_t> BinaryMesh::getMaterialAttribBuffer() const
+	{
+		if (!(m_attributes & Material))
+			throw std::runtime_error("BinaryMesh::getMaterialAttribBuffer:: mesh has no material attribute");
+
+		const auto stride = getAttributeElementStride(m_attributes);
+		const auto matOffset = getAttributeElementOffset(m_attributes, Material);
+		
+		std::vector<uint32_t> res;
+		res.reserve(m_vertices.size() / stride);
+		for(auto it = m_vertices.begin(); it != m_vertices.end(); it += stride)
+		{
+			res.push_back(asInt(*(it + matOffset)));
+		}
+
+		return res;
+	}
+
 	void BinaryMesh::verifyBoundingBox() const
 	{
 		if (m_bbox != getBillboardBoundingBox(m_vertices, m_attributes))
