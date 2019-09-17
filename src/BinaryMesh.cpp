@@ -553,6 +553,31 @@ namespace bmf
 		throw std::runtime_error("BinaryMesh::changeAttributes MultiVertexGenerator can only be used with ShapedMesh meshes");
 	}
 
+	void BinaryMesh::offsetMaterial(uint32_t offset)
+	{
+		if (!(m_attributes & Material) || m_vertices.empty()) return; // nothing to do
+		const auto stride = getAttributeElementStride(m_attributes);
+		const auto vertexCount = m_vertices.size() / stride;
+
+		float* cur = m_vertices.data() + getAttributeElementOffset(m_attributes, Material);
+		for(size_t i = 0; i < vertexCount; ++i)
+		{
+			*cur = asFloat(asInt(*cur) + offset);
+			cur += stride;
+		}
+	}
+
+	template <class IndexT>
+	void ShapeBinaryMesh<IndexT>::offsetMaterial(uint32_t offset)
+	{
+		BinaryMesh::offsetMaterial(offset);
+
+		for(auto& s : m_shapes)
+		{
+			s.materialId += offset;
+		}
+	}
+
 	BoundingBox BinaryMesh::getBillboardBoundingBox(const std::vector<float>& vertices, uint32_t attributes)
 	{
 		if (!(attributes & Position))

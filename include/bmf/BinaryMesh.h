@@ -51,6 +51,8 @@ namespace bmf
 		                            const std::vector<std::unique_ptr<VertexGenerator>>& generators);
 		// generate bounding boxes based on vertex positions and width, height, depth attributes if available
 		virtual void generateBoundingBoxes();
+		/// \brief adds the offset to each material id
+		virtual void offsetMaterial(uint32_t offset);
 #pragma endregion
 #pragma region Ctor
 		BinaryMesh(uint32_t attributes, std::vector<float> vertices);
@@ -66,6 +68,7 @@ namespace bmf
 		// generator helpers
 		void useVertexGenerator(const SingleVertexGenerator& svgen);
 		virtual void useMultiVertexGenerator(const MultiVertexGenerator& mvgen);
+
 		static BoundingBox getBillboardBoundingBox(const std::vector<float>& vertices, uint32_t attributes);
 		static BoundingBox getBoundingBox(const float* start, const float* end, uint32_t attributes);
 		static BoundingBox getBoundingBox(const std::vector<float>& vertices, uint32_t attributes);
@@ -151,6 +154,8 @@ namespace bmf
 		//void centerShapes();
 		// generates bounding boxes for all shapes
 		virtual void generateBoundingBoxes() override;
+		// offsets all material indices by the specified offset
+		virtual void offsetMaterial(uint32_t offset) override;
 
 		// converts mesh to a mesh with 16 bit indices (moves all data to the other mesh)
 		// it is recommended to call removeUnusedVertices() before calling this method.

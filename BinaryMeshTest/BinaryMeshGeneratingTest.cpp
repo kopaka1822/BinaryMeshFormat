@@ -194,3 +194,22 @@ TEST(TestSuite, BillboardBoundingBox)
 	EXPECT_EQ(m1.getBoundingBox().minX, -2.0f);
 	EXPECT_EQ(m1.getBoundingBox().maxX, 2.5f);
 }
+
+TEST(TestSuite, OffsetMaterial)
+{
+
+	std::vector<float> vertices = {
+		0.0f, 0.0f, 0.0f, asFloat(3), // billboard 1
+		1.0f, 1.0f, 1.0f, asFloat(5), // billboard 2
+	};
+
+	BinaryMesh m1(Position | Material, vertices);//, getIdentityVec(1));
+	m1.generateBoundingBoxes();
+
+	EXPECT_NO_THROW(m1.verify());
+
+	EXPECT_EQ(m1.getMaterialAttribBuffer(), (std::vector<uint32_t>{3, 5}));
+
+	m1.offsetMaterial(5);
+	EXPECT_EQ(m1.getMaterialAttribBuffer(), (std::vector<uint32_t>{8, 10}));
+}
