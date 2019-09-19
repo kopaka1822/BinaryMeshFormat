@@ -109,6 +109,8 @@ namespace bmf
 					if (s.bbox != calcBoundingBox(s))
 						throw std::runtime_error("shape bounding box not correct");
 					globalBbox = globalBbox.unionWith(s.bbox);
+					if (s.sphere != calcBoundingSphere(s))
+						throw std::runtime_error("shape bounding sphere not correct");
 				}
 
 				// check instances for this shape
@@ -136,13 +138,16 @@ namespace bmf
 		{
 			if (m_bbox != globalBbox)
 				throw std::runtime_error("global bounding box not correct");
+			
+			if (m_sphere != getBoundingSphere(m_vertices, m_attributes))
+				throw std::runtime_error("global bounding sphere not correct");
 		}
 	}
 
 	
 
 	template <class IndexT>
-	void ShapeBinaryMesh<IndexT>::verifyBoundingBox() const
+	void ShapeBinaryMesh<IndexT>::verifyBoundingVolumes() const
 	{
 		// empty => bounding box check is in overloaded verify function
 	}
@@ -170,7 +175,7 @@ namespace bmf
 		if (m_vertices.empty())
 			throw std::runtime_error("no vertices");
 
-		verifyBoundingBox();
+		verifyBoundingVolumes();
 	}
 
 	std::vector<uint32_t> BinaryMesh::getMaterialAttribBuffer() const
@@ -191,10 +196,14 @@ namespace bmf
 		return res;
 	}
 
-	void BinaryMesh::verifyBoundingBox() const
+	void BinaryMesh::verifyBoundingVolumes() const
 	{
+		if (!(m_attributes & Position)) return;
+
 		if (m_bbox != getBillboardBoundingBox(m_vertices, m_attributes))
 			throw std::runtime_error("bbox does not match computed billboard bounding box");
+		if (m_sphere != getBillboardBoundingSphere(m_vertices, m_attributes))
+			throw std::runtime_error("bounding sphere does not match computed bounding sphere");
 	}
 #pragma endregion
 #pragma region FileIO
@@ -219,6 +228,7 @@ namespace bmf
 		// create mesh with attributes
 		m_attributes = ui32;
 		m_bbox = read<BoundingBox>(f);
+		m_sphere = read<Sphere>(f);
 
 		// read vertices
 		ui32 = read<uint32_t>(f); // num vertices
@@ -249,6 +259,7 @@ namespace bmf
 		// write attributes
 		write(f, m_attributes);
 		write(f, m_bbox);
+		write(f, m_sphere);
 
 		// write vertices
 		write(f, uint32_t(m_vertices.size()));
@@ -365,6 +376,7 @@ namespace bmf
 			dst.m_shapes[0].indexOffset = 0;
 			dst.m_shapes[0].vertexOffset = 0;
 			dst.m_bbox = src.bbox;
+			dst.m_sphere = src.sphere;
 			//dst.m_shapes[0].instanceOffset = 0;
 
 			// copy indices and determine number of vertices to copy
@@ -454,6 +466,7 @@ namespace bmf
 				return s;
 			});
 		}
+		m.m_sphere = getBoundingSphere(m.m_vertices, m.m_attributes);
 
 		return m;
 	}
@@ -619,9 +632,10 @@ namespace bmf
 		return bbox;
 	}
 
-	void BinaryMesh::generateBoundingBoxes()
+	void BinaryMesh::generateBoundingVolumes()
 	{
 		m_bbox = getBillboardBoundingBox(m_vertices, m_attributes);
+		m_sphere = getBillboardBoundingSphere(m_vertices, m_attributes);
 	}
 
 	template<class IndexT>
@@ -742,6 +756,17 @@ namespace bmf
 	{
 		const auto stride = getAttributeElementStride(m_attributes);
 		return getBoundingBox(
+			m_vertices.data() + s.vertexOffset * stride,
+			m_vertices.data() + (s.vertexOffset + s.vertexCount) * stride,
+			m_attributes
+		);
+	}
+
+	template <class IndexT>
+	Sphere ShapeBinaryMesh<IndexT>::calcBoundingSphere(const Shape& s) const
+	{
+		const auto stride = getAttributeElementStride(m_attributes);
+		return getBoundingSphere(
 			m_vertices.data() + s.vertexOffset * stride,
 			m_vertices.data() + (s.vertexOffset + s.vertexCount) * stride,
 			m_attributes
@@ -882,14 +907,17 @@ namespace bmf
 	}
 
 	template<class IndexT>
-	void ShapeBinaryMesh<IndexT>::generateBoundingBoxes()
+	void ShapeBinaryMesh<IndexT>::generateBoundingVolumes()
 	{
 		m_bbox = -BoundingBox::max();
+		m_sphere = getBoundingSphere(m_vertices, m_attributes);
 		for(auto& s : m_shapes)
 		{
+			s.sphere = calcBoundingSphere(s);
 			s.bbox = calcBoundingBox(s);
 			m_bbox = m_bbox.unionWith(s.bbox);
 		}
+	
 	}
 
 	/*void BinaryMesh::deinstanceShapes(std::vector<BinaryMesh>& meshes, float epsilon)
@@ -1087,6 +1115,112 @@ namespace bmf
 		return getBoundingBox(vertices.data(), vertices.data() + vertices.size(), attributes);
 	}
 
+	Sphere BinaryMesh::getBillboardBoundingSphere(const std::vector<float>& vertices, uint32_t attributes)
+	{
+		auto s = getBoundingSphere(vertices, attributes);
+		
+		const auto hasWidth = attributes & Width;
+		const auto hasHeight = attributes & Height;
+		const auto hasDepth = attributes & Depth;
+		if (!hasWidth && !hasHeight && !hasDepth) return s;
+
+		const auto widthOffset = getAttributeElementOffset(attributes, Width);
+		const auto heightOffset = getAttributeElementOffset(attributes, Height);
+		const auto depthOffset = getAttributeElementOffset(attributes, Depth);
+
+		float maxRadius = 0.0f;
+		const auto stride = getAttributeElementStride(attributes);
+		for(auto i = vertices.data(), end = vertices.data() + vertices.size(); i != end; i += stride)
+		{
+			if (hasWidth)
+				maxRadius = std::max(maxRadius, *(i + widthOffset));
+			if (hasHeight)
+				maxRadius = std::max(maxRadius, *(i + heightOffset));
+			if (hasDepth)
+				maxRadius = std::max(maxRadius, *(i + depthOffset));
+		}
+
+		// extend bounding sphere by max billboard radius
+		s.radius += maxRadius;
+		return s;
+	}
+
+	Sphere BinaryMesh::getBoundingSphere(const std::vector<float>& vertices, uint32_t attributes)
+	{
+		return getBoundingSphere(vertices.data(), vertices.data() + vertices.size(), attributes);
+	}
+
+	Sphere BinaryMesh::getBoundingSphere(const float* start, const float* end, uint32_t attributes)
+	{
+		if (!(attributes & Position))
+			throw std::runtime_error("positions are required to calculate bounding sphere");
+
+		const auto stride = getAttributeElementStride(attributes);
+
+		if (start == end || start + stride == end) return Sphere::min();
+		// Ritter's bounding sphere algorithm
+		// 1. Pick a point x, search a point y which has the largest distance from x
+		// 2. Search a point z which has the largest distance from y. Set up an initial ball B, with its centre as the midpoint of y and z, the radius as half of the distance between y and z;
+		// If all points in are within ball B, then we get a bounding sphere. Otherwise, let p be a point outside the ball, construct a new ball covering both point p and previous ball. Repeat this step until all points are covered.
+
+		// 1.
+		auto x = toVec3(start);
+		auto y = getLargestDistantPoint(start + stride, end, stride, x);
+
+		// 2. 
+		auto z = getLargestDistantPoint(start, end, stride, y);
+		// ball setup
+		auto s = Sphere{
+			(y + z) * 0.5f,
+			glm::distance(y, z) * 0.5001f
+		};
+
+		// 3.
+		while(!allPointsInSphere(start, end, attributes, s, &x))
+		{
+			// x is not inside the sphere
+			s = s.unionWith(x);
+		}
+
+		return s;
+	}
+
+	bool BinaryMesh::allPointsInSphere(const std::vector<float>& vertices, uint32_t attributes, const Sphere& s)
+	{
+		return allPointsInSphere(vertices.data(), vertices.data() + vertices.size(), attributes, s);
+	}
+
+	bool BinaryMesh::allPointsInSphere(const float* start, const float* end, uint32_t attributes, const Sphere& s, glm::vec3* outsidePoint)
+	{
+		const auto stride = getAttributeElementStride(attributes);
+		for(const float* i = start; i != end; i += stride)
+		{
+			if (!s.isInside(toVec3(i))) 
+			{
+				if (outsidePoint)* outsidePoint = toVec3(i);
+				return false;
+			}
+		}
+		return true;
+	}
+
+	glm::vec3 BinaryMesh::getLargestDistantPoint(const float* start, const float* end, size_t stride, glm::vec3 p)
+	{
+		float curDist = std::numeric_limits<float>::max();
+		glm::vec3 res;
+		for(const float* i = start; i != end; i += stride)
+		{
+			const auto np = toVec3(i);
+			const auto newDist = glm::dot(np - p, np - p);
+			if (newDist < curDist)
+			{
+				curDist = newDist;
+				res = np;
+			}
+		}
+		return res;
+	}
+
 	template <class IndexT>
 	std::vector<ShapeBinaryMesh<uint16_t>> ShapeBinaryMesh<IndexT>::force16BitIndices()
 	{
@@ -1109,7 +1243,7 @@ namespace bmf
 					std::vector<uint16_t>(m_indices.begin(), m_indices.end()), std::move(m_shapes));
 				
 				if (res.size() > 1) // if this wasn't the only shape, the bounding box was invalidated
-					res.back().generateBoundingBoxes();
+					res.back().generateBoundingVolumes();
 				break;
 			}
 
@@ -1148,7 +1282,7 @@ namespace bmf
 			                 }});
 			// unused vertices could be created by splitting
 			res.back().removeUnusedVertices();
-			res.back().generateBoundingBoxes();
+			res.back().generateBoundingVolumes();
 
 			// adjust this shape so it contains only the new vertices
 			m_indices.erase(m_indices.begin(), m_indices.begin() + numIndices);

@@ -69,15 +69,27 @@ namespace bmf
 	}
 
 	/// \brief return number of floats of one vertex
-	constexpr uint32_t getAttributeElementStride(uint32_t attributes) noexcept
+	inline uint32_t getAttributeElementStride(uint32_t attributes) noexcept
+	{
+		// this functions is used quite frequently => remember last stride
+		static uint32_t lastAttribs = 0;
+		static uint32_t lastStride = 0;
+		if (attributes == lastAttribs) return lastStride;
+
+		lastAttribs = attributes;
+		lastStride = getAttributeElementOffset(attributes, Attributes::SIZE);
+		return lastStride;
+	}
+
+	constexpr uint32_t getAttributeElementStrideConstexpr(uint32_t attributes) noexcept
 	{
 		return getAttributeElementOffset(attributes, Attributes::SIZE);
 	}
 
 	/// \brief returns byte size of one vertex
-	constexpr uint32_t getAttributeByteStride(uint32_t attributes) noexcept
+	constexpr  uint32_t getAttributeByteStride(uint32_t attributes) noexcept
 	{
-		return getAttributeElementStride(attributes) * sizeof(float);
+		return getAttributeElementStrideConstexpr(attributes) * sizeof(float);
 	}
 
 	/// reinterpret float as integer

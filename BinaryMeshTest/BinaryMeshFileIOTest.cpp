@@ -21,7 +21,7 @@ TEST(TestSuite, LoadSave)
 	};
 
 	BinaryMesh m1(Texcoord0 | Position, vertices, indices, shapes);//, getIdentityVec(1));
-	m1.generateBoundingBoxes();
+	m1.generateBoundingVolumes();
 	EXPECT_NO_THROW(m1.verify());
 
 	m1.saveToFile("LoadSaveTest.bmf");

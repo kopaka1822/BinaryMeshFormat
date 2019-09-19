@@ -26,7 +26,7 @@ namespace bmf
 		}
 
 	private:
-		static constexpr size_t MAX_ELEMENTS = getAttributeElementStride(Attributes::SIZE);
+		static constexpr size_t MAX_ELEMENTS = getAttributeElementStrideConstexpr(Attributes::SIZE);
 		static constexpr size_t INIT_COUNT = 16;
 
 		static std::vector<float> getNewVector()

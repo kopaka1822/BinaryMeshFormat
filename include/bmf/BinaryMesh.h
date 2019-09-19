@@ -9,6 +9,7 @@
 #include "BoundingBox.h"
 #include <string>
 #include "generators/glm.h"
+#include "Sphere.h"
 
 #ifdef BMF_GENERATORS
 #include "generators/ConstantValueGenerator.h"
@@ -50,7 +51,7 @@ namespace bmf
 		void changeAttributes(uint32_t newAttributes,
 		                            const std::vector<std::unique_ptr<VertexGenerator>>& generators);
 		// generate bounding boxes based on vertex positions and width, height, depth attributes if available
-		virtual void generateBoundingBoxes();
+		virtual void generateBoundingVolumes();
 		/// \brief adds the offset to each material id
 		virtual void offsetMaterial(uint32_t offset);
 #pragma endregion
@@ -72,6 +73,12 @@ namespace bmf
 		static BoundingBox getBillboardBoundingBox(const std::vector<float>& vertices, uint32_t attributes);
 		static BoundingBox getBoundingBox(const float* start, const float* end, uint32_t attributes);
 		static BoundingBox getBoundingBox(const std::vector<float>& vertices, uint32_t attributes);
+		static Sphere getBillboardBoundingSphere(const std::vector<float>& vertices, uint32_t attributes);
+		static Sphere getBoundingSphere(const std::vector<float>& vertices, uint32_t attributes);
+		static Sphere getBoundingSphere(const float* start, const float* end, uint32_t attributes);
+		static bool allPointsInSphere(const std::vector<float>& vertices, uint32_t attributes, const Sphere& s);
+		static bool allPointsInSphere(const float* start, const float* end, uint32_t attributes, const Sphere& s, glm::vec3* outsidePoint = nullptr);
+		static glm::vec3 getLargestDistantPoint(const float* start, const float* end, size_t stride, glm::vec3 p);
 #pragma endregion 
 #pragma region FileIO
 		// fstream helpers
@@ -89,13 +96,14 @@ namespace bmf
 		virtual void writeExtendedData(std::fstream& stream) const {}
 		virtual void readExtendedData(std::fstream& stream) {}
 #pragma endregion 
-		virtual void verifyBoundingBox() const;
+		virtual void verifyBoundingVolumes() const;
 
 		std::vector<float> m_vertices;
-		BoundingBox m_bbox;		
+		BoundingBox m_bbox;
+		Sphere m_sphere;
 		uint32_t m_attributes = 0;
 
-		static constexpr uint32_t s_version = 7;
+		static constexpr uint32_t s_version = 8;
 	};
 
 	struct Shape
@@ -117,6 +125,8 @@ namespace bmf
 
 		// bounding box for this shape
 		BoundingBox bbox;
+		// bounding sphere for this shape
+		Sphere sphere;
 	};
 
 	template<class IndexT>
@@ -153,7 +163,7 @@ namespace bmf
 		// moves all shape vertices so that they are centered around the origin
 		//void centerShapes();
 		// generates bounding boxes for all shapes
-		virtual void generateBoundingBoxes() override;
+		virtual void generateBoundingVolumes() override;
 		// offsets all material indices by the specified offset
 		virtual void offsetMaterial(uint32_t offset) override;
 
@@ -176,6 +186,7 @@ namespace bmf
 		// generator helpers
 		void useMultiVertexGenerator(const MultiVertexGenerator& mvgen) override;
 		BoundingBox calcBoundingBox(const Shape& s) const;
+		Sphere calcBoundingSphere(const Shape& s) const;
 #pragma endregion 
 #pragma region FileIO
 		// virtual functions for derived class
@@ -184,7 +195,7 @@ namespace bmf
 		virtual void readExtendedData(std::fstream& stream) override;
 #pragma endregion 
 
-		virtual void verifyBoundingBox() const override;
+		virtual void verifyBoundingVolumes() const override;
 		void expectSingleShape(const std::string& operation) const;
 
 		std::vector<IndexT> m_indices;

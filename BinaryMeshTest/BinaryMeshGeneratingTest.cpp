@@ -21,7 +21,7 @@ TEST(TestSuite, GenerateRemove)
 	};
 
 	BinaryMesh m1(Texcoord0 | Position, vertices, indices, shapes);//, getIdentityVec(1));
-	m1.generateBoundingBoxes();
+	m1.generateBoundingVolumes();
 	EXPECT_NO_THROW(m1.verify());
 
 	// removing texcoords
@@ -154,7 +154,7 @@ TEST(TestSuite, Force16Bit)
 	};
 
 	BinaryMesh m1(Position, vertices, indices, shapes);//, getIdentityVec(1));
-	m1.generateBoundingBoxes();
+	m1.generateBoundingVolumes();
 
 	EXPECT_NO_THROW(m1.verify());
 	
@@ -187,7 +187,7 @@ TEST(TestSuite, BillboardBoundingBox)
 	};
 
 	BinaryMesh m1(Position | Width | Height, vertices);//, getIdentityVec(1));
-	m1.generateBoundingBoxes();
+	m1.generateBoundingVolumes();
 
 	EXPECT_NO_THROW(m1.verify());
 
@@ -204,7 +204,7 @@ TEST(TestSuite, OffsetMaterial)
 	};
 
 	BinaryMesh m1(Position | Material, vertices);//, getIdentityVec(1));
-	m1.generateBoundingBoxes();
+	m1.generateBoundingVolumes();
 
 	EXPECT_NO_THROW(m1.verify());
 

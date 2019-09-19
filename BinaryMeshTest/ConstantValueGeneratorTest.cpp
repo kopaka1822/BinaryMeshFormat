@@ -22,7 +22,7 @@ TEST(TestSuite, ConstantValue)
 	};
 
 	BinaryMesh m1(Position, vertices, indices, shapes);//, getIdentityVec(1));
-	m1.generateBoundingBoxes();
+	m1.generateBoundingVolumes();
 
 	std::vector<std::unique_ptr<VertexGenerator>> generators;
 	const float texValue[] = { 2.0f, 3.0f };

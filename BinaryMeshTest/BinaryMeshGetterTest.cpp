@@ -24,7 +24,7 @@ TEST(TestSuite, SummedIncies)
 	};
 
 	BinaryMesh m1(Position, vertices, indices, shapes);//, getIdentityVec(1));
-	m1.generateBoundingBoxes();
+	m1.generateBoundingVolumes();
 	EXPECT_NO_THROW(m1.verify());
 
 	auto si = m1.getSummedIndices();
@@ -56,7 +56,7 @@ TEST(TestSuite, MaterialPerTriangle)
 	};
 
 	BinaryMesh m1(Position, vertices, indices, shapes);//, getIdentityVec(1));
-	m1.generateBoundingBoxes();
+	m1.generateBoundingVolumes();
 	EXPECT_NO_THROW(m1.verify());
 
 	auto mids = m1.getMaterialIdPerTriangle();
@@ -73,7 +73,7 @@ TEST(TestSuite, MaterialAttribBuffer)
 	};
 
 	BinaryMesh m(Position | Material, vertices);
-	m.generateBoundingBoxes();
+	m.generateBoundingVolumes();
 
 	EXPECT_NO_THROW(m.verify());
 

@@ -21,7 +21,7 @@ TEST(TestSuite, FlatNormalsDifferentNormals) // two triangles with different nor
 	};
 
 	BinaryMesh m1(Position, vertices, indices, shapes);//, getIdentityVec(1));
-	m1.generateBoundingBoxes();
+	m1.generateBoundingVolumes();
 
 	std::vector<std::unique_ptr<VertexGenerator>> generators;
 	generators.emplace_back(new FlatNormalGenerator());
@@ -70,7 +70,7 @@ TEST(TestSuite, FlatNormalsSameNormals) // two triangles with the same normals
 	};
 
 	BinaryMesh m1(Position, vertices, indices, shapes);// , getIdentityVec(1));
-	m1.generateBoundingBoxes();
+	m1.generateBoundingVolumes();
 
 	std::vector<std::unique_ptr<VertexGenerator>> generators;
 	generators.emplace_back(new FlatNormalGenerator());

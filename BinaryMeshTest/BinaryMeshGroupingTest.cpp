@@ -31,7 +31,7 @@ TEST(TestSuite, Split)
 	};
 
 	BinaryMesh baseMesh(Texcoord0 | Position, vertices, indices, shapes);//, instances);
-	baseMesh.generateBoundingBoxes();
+	baseMesh.generateBoundingVolumes();
 	EXPECT_NO_THROW(baseMesh.verify());
 
 	const auto splitted = baseMesh.splitShapes();
@@ -103,9 +103,9 @@ TEST(TestSuite, Merge)
 
 	std::vector<BinaryMesh> meshes;
 	meshes.emplace_back(Position | Texcoord0, vertices1, indices1, shapes1);//, instances1);
-	meshes.back().generateBoundingBoxes();
+	meshes.back().generateBoundingVolumes();
 	meshes.emplace_back(Position | Texcoord0, vertices2, indices2, shapes2);//, instances2);
-	meshes.back().generateBoundingBoxes();
+	meshes.back().generateBoundingVolumes();
 	EXPECT_NO_THROW(meshes[0].verify());
 	EXPECT_NO_THROW(meshes[1].verify());
 

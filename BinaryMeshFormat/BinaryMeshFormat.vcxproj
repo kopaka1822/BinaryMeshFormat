@@ -133,6 +133,7 @@
     <ClInclude Include="..\include\bmf\generators\FlatNormalGenerator.h" />
     <ClInclude Include="..\include\bmf\generators\glm.h" />
     <ClInclude Include="..\include\bmf\generators\InterpolatedNormalGenerator.h" />
+    <ClInclude Include="..\include\bmf\Sphere.h" />
     <ClInclude Include="..\include\bmf\Triangle.h" />
     <ClInclude Include="..\include\bmf\Vertex.h" />
     <ClInclude Include="..\include\bmf\VertexCache.h" />
