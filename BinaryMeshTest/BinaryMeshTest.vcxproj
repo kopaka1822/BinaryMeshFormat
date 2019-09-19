@@ -54,6 +54,7 @@
     <ClCompile Include="BinaryMeshGeneratingTest.cpp" />
     <ClCompile Include="BinaryMeshGetterTest.cpp" />
     <ClCompile Include="BinaryMeshGroupingTest.cpp" />
+    <ClCompile Include="BoundingTest.cpp" />
     <ClCompile Include="ConstantValueGeneratorTest.cpp" />
     <ClCompile Include="DeinstanceTest.cpp" />
     <ClCompile Include="FlatNormalGeneratorTest.cpp" />

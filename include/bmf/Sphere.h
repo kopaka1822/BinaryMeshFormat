@@ -21,7 +21,9 @@ namespace bmf
 		{
 			auto toCenter = center - point;
 			const float dist = length(toCenter);
+			if (dist < radius) return *this; // point is already inside
 			toCenter /= dist; // normalize to center
+
 			const auto opposite = center + radius * toCenter; // point furthest away from point on the sphere
 
 			return Sphere{
