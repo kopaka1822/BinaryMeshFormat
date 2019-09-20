@@ -152,7 +152,7 @@ namespace bmf
 		// empty => bounding box check is in overloaded verify function
 	}
 
-	uint32_t BinaryMesh::getNumVertices() const
+	uint32_t BinaryMesh::getNumVertices() const noexcept
 	{
 		const auto stride = getAttributeElementStride(m_attributes);
 		return uint32_t(m_vertices.size() / stride);

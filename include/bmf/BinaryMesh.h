@@ -27,14 +27,16 @@ namespace bmf
 
 #pragma region Getter
 		/// \brief returns bitmask of all used attributes (see Attributes enum)
-		uint32_t getAttributes() const { return m_attributes; }
-		std::vector<float>& getVertices() { return m_vertices; }
-		const std::vector<float>& getVertices() const { return m_vertices; }
-		BoundingBox& getBoundingBox() { return m_bbox; }
-		const BoundingBox& getBoundingBox() const { return m_bbox; }
+		uint32_t getAttributes() const noexcept { return m_attributes; }
+		std::vector<float>& getVertices() noexcept { return m_vertices; }
+		const std::vector<float>& getVertices() const noexcept { return m_vertices; }
+		BoundingBox& getBoundingBox() noexcept { return m_bbox; }
+		const BoundingBox& getBoundingBox() const noexcept { return m_bbox; }
+		Sphere& getBoundingSphere() noexcept { return m_sphere; }
+		const Sphere& getBoundingSphere() const noexcept { return m_sphere; }
 		//std::vector<InstanceData>& getInstanceTransforms();
 		//const std::vector<InstanceData>& getInstanceTransforms() const;
-		uint32_t getNumVertices() const;
+		uint32_t getNumVertices() const noexcept;
 		/// \brief checks if the mesh has a valid amount of indices/vertices
 		/// and no index that goes beyond the buffer.
 		/// \throw std::runtime error if something is wrong
