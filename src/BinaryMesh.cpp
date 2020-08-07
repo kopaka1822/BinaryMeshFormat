@@ -273,6 +273,40 @@ namespace bmf
 		f.close();
 	}
 
+	BinaryMesh BinaryMesh::merge(const std::vector<BinaryMesh>& meshes)
+	{
+		if (meshes.empty()) return BinaryMesh();
+
+		BinaryMesh m;
+		m.m_attributes = meshes.front().m_attributes;
+		m.m_bbox = -BoundingBox::max();
+		size_t m_totalVertices = 0;
+
+		// acquire total vertex count
+		for (const auto& src : meshes)
+		{
+			if (src.m_attributes != m.m_attributes)
+				throw std::runtime_error("BinaryMesh::merge attributes of all meshes must be the same");
+
+			m_totalVertices += src.m_vertices.size();
+		}
+
+		// resize buffers
+		m.m_vertices.resize(m_totalVertices);
+
+		auto curVertex = m.m_vertices.begin();
+
+		// copy data
+		for (const auto& src : meshes)
+		{
+			curVertex = std::copy(src.m_vertices.begin(), src.m_vertices.end(), curVertex);
+			m.m_bbox = m.m_bbox.unionWith(src.m_bbox);
+		}
+		m.m_sphere = getBoundingSphere(m.m_vertices, m.m_attributes);
+
+		return m;
+	}
+
 	template <class T>
 	void BinaryMesh::write(std::fstream& stream, const T& value)
 	{

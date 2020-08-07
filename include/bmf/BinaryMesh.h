@@ -49,6 +49,9 @@ namespace bmf
 		void loadFromFile(const std::string& filename);
 		void saveToFile(const std::string& filename) const;
 #pragma endregion
+#pragma region Grouping
+		static BinaryMesh merge(const std::vector<BinaryMesh>& meshes);
+#pragma endregion 
 #pragma region Generating
 		void changeAttributes(uint32_t newAttributes,
 		                            const std::vector<std::unique_ptr<VertexGenerator>>& generators);
